@@ -1,18 +1,18 @@
 import { Routes, Route } from 'react-router-dom'
-import Navbar from './components/Navbar'
 import Home from './pages/Home'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
 import Upload from './pages/Upload'
+import Dashboard from './pages/Dashboard'
 
-function App() {
+export default function App() {
   return (
-    <div className="min-h-screen bg-surface-900">
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/upload" element={<Upload />} />
-      </Routes>
-    </div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route path="/upload" element={<Upload />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
   )
 }
-
-export default App
