@@ -90,6 +90,18 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes particleFloat {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-100vh) translateX(20px); opacity: 0; }
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(60px, 60px); }
+}
+
 /* ── Utility Classes ─────────────────────────── */
 .animate-float {
   animation: float 6s ease-in-out infinite;
