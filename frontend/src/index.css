@@ -134,3 +134,17 @@ html.light ::-webkit-scrollbar-track { background: #faf8ff; }
 html.light ::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 3px; }
 html.dark ::-webkit-scrollbar-track { background: #0c0a1d; }
 html.dark ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 3px; }
+
+/* Animations */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.2s ease-out; }
+.animate-scale-in { animation: scale-in 0.3s ease-out; }
+.animate-slide-up { animation: slide-up 0.3s ease-out; }
+
+/* Stroke colors for SVG charts */
+.stroke-emerald-400 { stroke: #34d399; }
+.stroke-amber-400 { stroke: #fbbf24; }
+.stroke-red-400 { stroke: #f87171; }
+.stroke-red-600 { stroke: #dc2626; }
