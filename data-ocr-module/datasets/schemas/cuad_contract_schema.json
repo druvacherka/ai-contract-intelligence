@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CUAD Training Contract",
+  "description": "Schema for training-ready CUAD contract output",
+  "type": "object",
+  "required": ["contract_id", "text", "clauses"],
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "description": "Unique deterministic contract identifier (SHA-256 truncated)"
+    },
+    "text": {
+      "type": "string",
+      "description": "Full normalized contract text"
+    },
+    "clauses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "start", "end", "text"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "CUAD clause type name"
+          },
+          "start": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Character-level start offset in the text"
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Character-level end offset in the text"
+          },
+          "text": {
+            "type": "string",
+            "description": "The clause text span"
+          }
+        }
+      }
+    }
+  }
+}

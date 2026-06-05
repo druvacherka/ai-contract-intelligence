@@ -1,67 +1,93 @@
 <div align="center">
 
-# 🔍 AI Contract Intelligence & Risk Scoring System
+# 📄 AI Contract Intelligence & Risk Scoring System
 
-**Enterprise-grade NLP + OCR + Semantic Search platform for legal and compliance teams**
+**Enterprise-grade OCR + NLP + Risk Analysis platform for legal and compliance teams**
 
-[![React](https://img.shields.io/badge/Frontend-React-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/Frontend-React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 [![Vite](https://img.shields.io/badge/Build-Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Docker](https://img.shields.io/badge/DevOps-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com/)
-[![Tailwind](https://img.shields.io/badge/CSS-Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 
 </div>
 
 ---
 
-## 📋 Project Overview
+## 🔍 Project Overview
 
-The **AI Contract Intelligence** platform is an enterprise-grade system designed to help legal and compliance teams analyze contracts at scale. The platform will combine OCR, NLP, and semantic search to extract, analyze, and score legal documents with AI precision.
+The **AI Contract Intelligence** platform is an enterprise-grade system designed to help legal and compliance teams analyze contracts at scale. The platform combines **OCR**, **NLP**, and **Risk Scoring** to extract, classify, and score legal documents with AI precision.
 
-This repository is the **monorepo foundation** — currently initialized with the frontend and DevOps architecture.
+### Key Capabilities
+
+- **📸 OCR Engine** — Extracts text from scanned PDFs, images, DOCX, and handwritten documents using Tesseract + PyMuPDF with self-healing retry logic
+- **🧠 NLP Clause Classifier** — Identifies 10 legal clause types (Termination, Confidentiality, Liability, Arbitration, etc.) using TF-IDF + keyword analysis
+- **⚠️ Risk Scoring Engine** — Evaluates contracts across 5 risk dimensions and produces a 0–100 risk score with severity levels
+- **🚀 Full Pipeline API** — Upload a contract (PDF/DOCX/image) and get clause classification + risk score in a single API call
 
 ---
 
-## 🏗️ Current Repository Structure
+## 📁 Repository Structure
 
 ```
 ai-contract-intelligence/
 │
-├── frontend/                # React + Vite + Tailwind CSS
-│   ├── public/
+├── frontend/                    # React 19 + Vite
 │   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/           # Route-level page components
-│   │   ├── services/        # API service layer
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── styles/          # Additional stylesheets
-│   │   ├── App.jsx          # Root app with routing
-│   │   └── main.jsx         # Entry point
+│   │   ├── pages/
+│   │   │   ├── Dashboard.jsx    # Main dashboard
+│   │   │   ├── Upload.jsx       # Contract upload page
+│   │   │   └── ContractResults.jsx  # Analysis results display
+│   │   ├── services/
+│   │   │   └── api.js           # Backend API client
+│   │   ├── App.jsx              # Root app with routing
+│   │   └── index.css            # Global styles
 │   ├── package.json
-│   ├── vite.config.js
-│   └── Dockerfile
+│   └── vite.config.js
 │
-├── infra/                   # DevOps & Infrastructure
+├── data-ocr-module/             # Python Backend (FastAPI)
+│   ├── server.py                # FastAPI server with all endpoints
+│   ├── requirements.txt         # Python dependencies
+│   ├── src/
+│   │   ├── ocr/
+│   │   │   ├── document_loader.py   # File type detection & loading
+│   │   │   ├── pdf_parser.py        # PDF text extraction (PyMuPDF)
+│   │   │   ├── docx_parser.py       # DOCX text extraction
+│   │   │   ├── scan_detector.py     # Scanned vs digital detection
+│   │   │   ├── ocr_engine.py        # Tesseract OCR with self-healing retries
+│   │   │   ├── image_preprocessor.py # Adaptive binarization & presets
+│   │   │   └── text_cleaner.py      # Post-OCR text normalization
+│   │   ├── nlp/
+│   │   │   ├── nlp_engine.py        # Legal clause classifier (TF-IDF)
+│   │   │   └── risk_engine.py       # Multi-dimensional risk scorer
+│   │   └── tests/
+│   │       ├── test_ocr.py          # OCR unit tests (130 tests)
+│   │       ├── test_nlp.py          # NLP classifier tests
+│   │       ├── test_risk.py         # Risk engine tests
+│   │       └── test_api.py          # API endpoint tests
+│
+├── infra/                       # DevOps & Infrastructure
 │   ├── docker/
-│   │   ├── frontend.Dockerfile
-│   │   └── nginx.conf
 │   ├── github_actions/
 │   └── terraform/
 │
-├── docker-compose.yml       # Frontend + Nginx services
-├── .env.example             # Environment variable template
-├── .gitignore               # Professional gitignore
+├── docker-compose.yml
+├── .gitignore
 └── README.md
 ```
 
 ---
 
-## ⚙️ Tech Stack (Current)
+## 🛠️ Tech Stack
 
-| Layer          | Technology                    |
-|---------------|-------------------------------|
-| **Frontend**  | React 19, Vite, Tailwind CSS 4 |
-| **Routing**   | React Router DOM              |
-| **DevOps**    | Docker, Docker Compose, Nginx |
+| Layer          | Technology                                |
+|---------------|-------------------------------------------|
+| **Frontend**  | React 19, Vite, CSS                       |
+| **Backend**   | FastAPI, Uvicorn, Pydantic                |
+| **OCR**       | Tesseract, PyMuPDF (fitz), Pillow         |
+| **NLP**       | scikit-learn (TF-IDF), regex patterns     |
+| **Risk**      | Custom multi-dimensional scoring engine   |
+| **DevOps**    | Docker, Docker Compose, Nginx             |
 
 ---
 
@@ -69,7 +95,9 @@ ai-contract-intelligence/
 
 ### Prerequisites
 
+- **Python** >= 3.11
 - **Node.js** >= 20
+- **Tesseract OCR** installed and on PATH
 - **Git**
 
 ### 1. Clone the Repository
@@ -79,13 +107,26 @@ git clone https://github.com/druvacherka/ai-contract-intelligence.git
 cd ai-contract-intelligence
 ```
 
-### 2. Set Up Environment
+### 2. Set Up Backend
 
 ```bash
-cp .env.example .env
+cd data-ocr-module
+python -m venv .venv
+.venv\Scripts\activate        # Windows
+# source .venv/bin/activate   # Linux/macOS
+pip install -r requirements.txt
 ```
 
-### 3. Start Frontend
+### 3. Start Backend Server
+
+```bash
+cd data-ocr-module
+python server.py
+```
+
+The API will be available at `http://localhost:8000`
+
+### 4. Start Frontend
 
 ```bash
 cd frontend
@@ -95,11 +136,71 @@ npm run dev
 
 The app will be available at `http://localhost:5173`
 
-### 4. Start with Docker
+### 5. Start with Docker (Optional)
 
 ```bash
 docker-compose up --build
 ```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint              | Description                                    |
+|--------|-----------------------|------------------------------------------------|
+| GET    | `/health`             | Health check                                   |
+| GET    | `/api/pipeline/status`| Pipeline component status                      |
+| POST   | `/api/upload`         | Upload document for OCR extraction             |
+| GET    | `/api/documents`      | List processed documents                       |
+| GET    | `/api/documents/{id}` | Get specific document                          |
+| POST   | `/upload-contract`    | **Full pipeline**: Upload → OCR → NLP → Risk   |
+| POST   | `/analyze-text`       | Analyze raw contract text (NLP + Risk)         |
+
+### Response Schema (NLP + Risk)
+
+```json
+{
+  "clause": "Termination",
+  "confidence": 92.4,
+  "risk_score": 78,
+  "risk_level": "High"
+}
+```
+
+---
+
+## 🧪 Running Tests
+
+```bash
+cd data-ocr-module
+python -m pytest src/tests/ -v
+```
+
+**130+ tests** covering OCR, NLP, Risk, and API endpoints.
+
+---
+
+## 🔬 OCR Engine Features
+
+- **PyMuPDF** for 10–50x faster PDF rendering (replaces pdf2image/Poppler)
+- **Self-healing OCR**: Automatically retries with handwriting preset if confidence < 65%
+- **Adaptive binarization**: Otsu + local thresholding for degraded scans
+- **Preset system**: `default`, `clean`, `noisy`, `handwriting` configurations
+- **Multi-format**: PDF, DOCX, PNG, JPG, TIFF, BMP
+
+---
+
+## ⚠️ Risk Scoring Dimensions
+
+| Dimension              | Weight | Examples                                      |
+|-----------------------|--------|-----------------------------------------------|
+| Unfavorable Obligations| 25%   | "sole discretion", "without notice"           |
+| Liability Exposure     | 30%   | "unlimited liability", "no cap"               |
+| Vague Language         | 15%   | "reasonable efforts", "as deemed appropriate" |
+| Missing Protections    | 20%   | No indemnification cap, no termination clause |
+| Renewal Risks          | 10%   | "auto-renewal", "evergreen"                   |
+
+**Risk Levels**: Low (0–30) · Medium (31–70) · High (71–100)
 
 ---
 

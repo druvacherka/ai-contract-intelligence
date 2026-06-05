@@ -10,6 +10,7 @@ const Upload = lazy(() => import('./pages/Upload'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Search = lazy(() => import('./pages/Search'))
 const ContractDetail = lazy(() => import('./pages/ContractDetail'))
+const ContractResults = lazy(() => import('./pages/ContractResults'))
 const Analytics = lazy(() => import('./pages/Analytics'))
 const Team = lazy(() => import('./pages/Team'))
 const Settings = lazy(() => import('./pages/Settings'))
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/search" element={<Search />} />
           <Route path="/contract/:id" element={<ContractDetail />} />
+          <Route path="/results" element={<ContractResults />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/team" element={<Team />} />
           <Route path="/settings" element={<Settings />} />

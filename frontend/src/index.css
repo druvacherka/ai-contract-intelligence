@@ -148,3 +148,112 @@ html.dark ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 3px; }
 .stroke-amber-400 { stroke: #fbbf24; }
 .stroke-red-400 { stroke: #f87171; }
 .stroke-red-600 { stroke: #dc2626; }
+
+/* ── Glassmorphism ─────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+html.dark .glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.12);
+}
+html.dark .glass-card:hover {
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.2);
+}
+
+/* ── Risk Level Glow ─────────── */
+.glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3), 0 0 60px rgba(16, 185, 129, 0.1); }
+html.dark .glow-green { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), 0 0 60px rgba(16, 185, 129, 0.15); }
+.glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 0 60px rgba(245, 158, 11, 0.1); }
+html.dark .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.4), 0 0 60px rgba(245, 158, 11, 0.15); }
+.glow-red { box-shadow: 0 0 20px rgba(244, 63, 94, 0.3), 0 0 60px rgba(244, 63, 94, 0.1); }
+html.dark .glow-red { box-shadow: 0 0 20px rgba(244, 63, 94, 0.4), 0 0 60px rgba(244, 63, 94, 0.15); }
+
+/* ── Circular Gauge Animation ─────────── */
+@keyframes gauge-fill {
+  from { stroke-dashoffset: 440; }
+}
+
+@keyframes fill-bar {
+  from { width: 0%; }
+}
+
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes check-pop {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-check-pop { animation: check-pop 0.5s ease-out forwards; }
+.animate-count-up { animation: count-up 0.6s ease-out forwards; }
+
+/* ── Skeleton Loading ─────────── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #f5f3ff 25%, #ede9fe 50%, #f5f3ff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+html.dark .skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Processing Steps ─────────── */
+@keyframes step-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.step-active { animation: step-pulse 1s ease-in-out infinite; }
+
+/* ── Glow pulse for high risk ─────────── */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(244, 63, 94, 0.3); }
+  50% { opacity: 0.85; box-shadow: 0 0 40px rgba(244, 63, 94, 0.5); }
+}
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+
+/* ── Staggered entry ─────────── */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+
+/* ── Tab styles ─────────── */
+.tab-active {
+  background: linear-gradient(135deg, var(--color-brand-600), var(--color-brand-500));
+  color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+.tab-inactive {
+  background: transparent;
+  color: #64748b;
+}
+html.dark .tab-inactive { color: #94a3b8; }
+.tab-inactive:hover { background: #f5f3ff; }
+html.dark .tab-inactive:hover { background: rgba(255,255,255,0.05); }
+
+/* ── Results page specific ─────────── */
+.result-card-enter {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slide-up 0.5s ease-out forwards;
+}
+
+

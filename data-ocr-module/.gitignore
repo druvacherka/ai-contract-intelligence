@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+
+# Logs
+logs/*.log
+
+# Data files (large)
+datasets/raw/*.json
+datasets/raw/*.csv
+datasets/raw/*.zip
+datasets/processed/*.json
+datasets/exports/*.json
+datasets/exports/*.csv
+uploads/*
+!uploads/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tesseract/Poppler binaries
+tesseract/
+poppler/

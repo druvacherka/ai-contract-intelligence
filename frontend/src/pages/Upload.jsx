@@ -1,17 +1,148 @@
-import { useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useRef, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
+import api from '../services/api'
+
+const STAGES = [
+  { key: 'uploading', label: 'Uploading File', icon: '📤' },
+  { key: 'extracting', label: 'Extracting Text', icon: '📝' },
+  { key: 'ocr', label: 'Running OCR', icon: '🔍' },
+  { key: 'analyzing', label: 'Analyzing Contract', icon: '🧠' },
+  { key: 'scoring', label: 'Generating Risk Score', icon: '⚠️' },
+  { key: 'complete', label: 'Complete', icon: '✅' },
+]
 
 export default function Upload() {
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState('upload') // 'upload' or 'paste'
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState([])
+  const [processing, setProcessing] = useState(false)
+  const [processingStage, setProcessingStage] = useState('')
+  const [results, setResults] = useState([])
+  const [nlpResult, setNlpResult] = useState(null)
+  const [currentFile, setCurrentFile] = useState('')
+  const [progress, setProgress] = useState(0)
+  const [pipelineStatus, setPipelineStatus] = useState(null)
+  const [backendOnline, setBackendOnline] = useState(null)
+  const [pasteText, setPasteText] = useState('')
+  const [pasteProcessing, setPasteProcessing] = useState(false)
+  const [pasteError, setPasteError] = useState('')
   const inputRef = useRef(null)
 
-  const handleDrag = (e) => { e.preventDefault(); setDragActive(e.type==='dragenter'||e.type==='dragover') }
-  const handleDrop = (e) => { e.preventDefault(); setDragActive(false); if(e.dataTransfer.files?.length) setFiles(Array.from(e.dataTransfer.files)) }
-  const handleChange = (e) => { if(e.target.files?.length) setFiles(Array.from(e.target.files)) }
-  const removeFile = (i) => setFiles(files.filter((_,idx)=>idx!==i))
-  const fmt = (b) => b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'
+  useEffect(() => {
+    checkBackend()
+  }, [])
+
+  const checkBackend = async () => {
+    try {
+      const health = await api.healthCheck()
+      setBackendOnline(health.status === 'healthy')
+      const status = await api.getPipelineStatus()
+      setPipelineStatus(status)
+    } catch {
+      setBackendOnline(false)
+    }
+  }
+
+  const handleDrag = (e) => { e.preventDefault(); setDragActive(e.type === 'dragenter' || e.type === 'dragover') }
+  const handleDrop = (e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.length) setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]) }
+  const handleChange = (e) => { if (e.target.files?.length) setFiles(prev => [...prev, ...Array.from(e.target.files)]) }
+  const removeFile = (i) => setFiles(files.filter((_, idx) => idx !== i))
+  const fmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
+  const ext = (name) => name.split('.').pop().toUpperCase()
+
+  const simulateStages = async (stageKeys) => {
+    for (const key of stageKeys) {
+      setProcessingStage(key)
+      if (key !== 'complete') {
+        await new Promise(r => setTimeout(r, 600))
+      }
+    }
+  }
+
+  const processFiles = async () => {
+    if (!files.length || processing) return
+    setProcessing(true)
+    setResults([])
+    setNlpResult(null)
+    setProgress(0)
+
+    const allResults = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      setCurrentFile(file.name)
+      setProgress(Math.round(((i) / files.length) * 100))
+
+      // Simulate stage progression
+      const stagePromise = simulateStages(['uploading', 'extracting', 'ocr', 'analyzing', 'scoring'])
+
+      try {
+        const result = await api.uploadForAnalysis(file)
+        await stagePromise
+        setProcessingStage('complete')
+        allResults.push({ file: file.name, status: 'success', ...result })
+        setNlpResult(result)
+
+        // Save to localStorage for dashboard
+        const history = JSON.parse(localStorage.getItem('contractiq_history') || '[]')
+        history.unshift({
+          ...result,
+          fileName: file.name,
+          timestamp: new Date().toISOString(),
+          id: Date.now().toString(),
+        })
+        if (history.length > 50) history.length = 50
+        localStorage.setItem('contractiq_history', JSON.stringify(history))
+      } catch (err) {
+        await stagePromise
+        setProcessingStage('complete')
+        allResults.push({ file: file.name, status: 'error', error: err.message })
+      }
+      setResults([...allResults])
+    }
+
+    setProgress(100)
+    setCurrentFile('')
+    setProcessing(false)
+    setFiles([])
+  }
+
+  const handlePasteAnalysis = async () => {
+    if (!pasteText.trim() || pasteProcessing) return
+    setPasteProcessing(true)
+    setPasteError('')
+
+    try {
+      const result = await api.analyzeText(pasteText)
+      setNlpResult(result)
+
+      // Save to localStorage
+      const history = JSON.parse(localStorage.getItem('contractiq_history') || '[]')
+      history.unshift({
+        ...result,
+        fileName: 'Pasted Text',
+        timestamp: new Date().toISOString(),
+        id: Date.now().toString(),
+      })
+      if (history.length > 50) history.length = 50
+      localStorage.setItem('contractiq_history', JSON.stringify(history))
+
+      // Navigate to results
+      navigate('/results', { state: { result, fileName: 'Pasted Text' } })
+    } catch (err) {
+      setPasteError(err.message)
+    } finally {
+      setPasteProcessing(false)
+    }
+  }
+
+  const getStageIndex = () => STAGES.findIndex(s => s.key === processingStage)
+
+  const riskColor = (level) =>
+    level === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
+    level === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+    'bg-emerald-50 text-emerald-700 border-emerald-200'
 
   return (
     <div className="min-h-screen bg-page">
@@ -25,30 +156,237 @@ export default function Upload() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-bold text-heading mb-2">Upload Contract</h1>
-        <p className="text-body mb-8">Upload your legal contracts for AI-powered analysis.</p>
-
-        <div className={`upload-zone border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all shadow-theme ${dragActive?'upload-zone-active':''}`} onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop} onClick={()=>inputRef.current?.click()}>
-          <input ref={inputRef} type="file" multiple accept=".pdf,.docx,.doc,.txt" onChange={handleChange} className="hidden" />
-          <div className="text-4xl mb-4">{dragActive?'📥':'📄'}</div>
-          <h3 className="font-semibold text-heading mb-2">{dragActive?'Drop files here':'Drag & drop contracts'}</h3>
-          <p className="text-sm text-muted mb-4">or click to browse</p>
-          <span className="text-xs text-body bg-subtle px-3 py-1 rounded-full border border-theme">PDF, DOCX, DOC, TXT</span>
+      <div className="max-w-4xl mx-auto px-6 py-10">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-heading">Upload & Analyze Contracts</h1>
+            <p className="text-body mt-1">Upload documents for AI-powered OCR extraction and NLP analysis.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border ${backendOnline === true ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : backendOnline === false ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+              <span className={`h-2 w-2 rounded-full ${backendOnline === true ? 'bg-emerald-500' : backendOnline === false ? 'bg-red-500' : 'bg-gray-400'}`}></span>
+              {backendOnline === true ? 'Pipeline Online' : backendOnline === false ? 'Pipeline Offline' : 'Checking...'}
+            </span>
+          </div>
         </div>
 
-        {files.length > 0 && (
-          <div className="mt-6 space-y-2">
-            {files.map((f,i) => (
-              <div key={i} className="flex items-center justify-between bg-card border border-theme rounded-xl p-4 shadow-theme">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span>📄</span>
-                  <div className="min-w-0"><p className="text-sm font-medium text-heading truncate">{f.name}</p><p className="text-xs text-muted">{fmt(f.size)}</p></div>
-                </div>
-                <button onClick={e=>{e.stopPropagation();removeFile(i)}} className="text-muted hover:text-accent-rose transition text-lg">×</button>
+        {/* Pipeline Status Bar */}
+        {pipelineStatus && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            {[
+              { label: 'Processed', value: pipelineStatus.processed_count, icon: '📊' },
+              { label: 'OCR DPI', value: pipelineStatus.ocr_dpi, icon: '🔍' },
+              { label: 'Max Size', value: pipelineStatus.max_file_size_mb + 'MB', icon: '📦' },
+              { label: 'Formats', value: pipelineStatus.supported_formats?.length || 4, icon: '📄' },
+            ].map((s, i) => (
+              <div key={i} className="bg-card border border-theme rounded-xl p-3 shadow-theme text-center">
+                <div className="text-lg mb-1">{s.icon}</div>
+                <div className="text-lg font-bold text-heading">{s.value}</div>
+                <div className="text-xs text-muted">{s.label}</div>
               </div>
             ))}
-            <button className="w-full mt-4 bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl font-semibold transition shadow-sm disabled:opacity-50" disabled>Analyze Contracts — Coming Soon</button>
+          </div>
+        )}
+
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-6 p-1 bg-subtle rounded-xl border border-theme">
+          <button
+            onClick={() => setActiveTab('upload')}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition ${activeTab === 'upload' ? 'tab-active' : 'tab-inactive'}`}
+          >
+            📄 Upload File
+          </button>
+          <button
+            onClick={() => setActiveTab('paste')}
+            className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition ${activeTab === 'paste' ? 'tab-active' : 'tab-inactive'}`}
+          >
+            📝 Paste Text
+          </button>
+        </div>
+
+        {/* Upload Tab */}
+        {activeTab === 'upload' && (
+          <>
+            {/* Upload Zone */}
+            <div
+              className={`upload-zone border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all shadow-theme ${dragActive ? 'upload-zone-active border-brand-400 bg-brand-50/30' : 'border-theme'}`}
+              onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
+              onClick={() => inputRef.current?.click()}
+            >
+              <input ref={inputRef} type="file" multiple accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png,.tiff,.tif,.bmp" onChange={handleChange} className="hidden" />
+              <div className="text-5xl mb-4">{dragActive ? '📥' : processing ? '⚙️' : '📄'}</div>
+              <h3 className="font-semibold text-heading mb-2 text-lg">{dragActive ? 'Drop files here' : processing ? `Processing: ${currentFile}` : 'Drag & drop contracts'}</h3>
+              <p className="text-sm text-muted mb-4">or click to browse • PDF, DOCX, TXT, JPG, PNG supported • Handwritten documents welcome</p>
+              <div className="flex items-center justify-center gap-2 flex-wrap">
+                {['PDF', 'DOCX', 'TXT', 'JPG', 'PNG', 'TIFF'].map(f => (
+                  <span key={f} className="text-xs px-2.5 py-1 rounded-full bg-subtle border border-theme text-body">{f}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Processing Stages */}
+            {processing && processingStage && (
+              <div className="mt-6 bg-card border border-theme rounded-2xl p-6 shadow-theme">
+                <h3 className="text-sm font-semibold text-heading mb-4">Processing Pipeline</h3>
+                <div className="space-y-3">
+                  {STAGES.map((stage, i) => {
+                    const currentIdx = getStageIndex()
+                    const isDone = i < currentIdx || processingStage === 'complete'
+                    const isActive = i === currentIdx && processingStage !== 'complete'
+                    const isPending = i > currentIdx && processingStage !== 'complete'
+
+                    return (
+                      <div key={stage.key} className="flex items-center gap-3">
+                        <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                          isDone ? 'bg-emerald-500 text-white' :
+                          isActive ? 'bg-brand-500 text-white step-active' :
+                          'bg-subtle border border-theme text-muted'
+                        }`}>
+                          {isDone ? '✓' : isActive ? '●' : '○'}
+                        </div>
+                        <span className={`text-sm font-medium ${
+                          isDone ? 'text-emerald-600' :
+                          isActive ? 'text-brand-600 font-semibold' :
+                          'text-muted'
+                        }`}>
+                          {stage.icon} {stage.label}{isActive ? '...' : ''}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-body font-medium">Overall Progress</span>
+                    <span className="text-muted">{progress}%</span>
+                  </div>
+                  <div className="h-2.5 bg-subtle rounded-full overflow-hidden border border-theme">
+                    <div className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Queued Files */}
+            {files.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-heading mb-3">Queued Files ({files.length})</h3>
+                <div className="space-y-2">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between bg-card border border-theme rounded-xl p-3.5 shadow-theme">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-9 w-9 rounded-lg bg-subtle border border-theme flex items-center justify-center text-xs font-bold text-brand-600">{ext(f.name)}</div>
+                        <div className="min-w-0"><p className="text-sm font-medium text-heading truncate">{f.name}</p><p className="text-xs text-muted">{fmt(f.size)}</p></div>
+                      </div>
+                      <button onClick={e => { e.stopPropagation(); removeFile(i) }} className="text-muted hover:text-red-500 transition text-lg px-2" disabled={processing}>×</button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={processFiles}
+                    disabled={processing || !backendOnline}
+                    className="w-full mt-3 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white py-3.5 rounded-xl font-semibold transition shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {processing ? (
+                      <><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Processing...</>
+                    ) : (
+                      <>{backendOnline ? '🚀 Analyze with AI (OCR + NLP + Risk)' : '⚠️ Backend Offline — Start server first'}</>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Paste Text Tab */}
+        {activeTab === 'paste' && (
+          <div className="bg-card border border-theme rounded-2xl p-6 shadow-theme">
+            <h3 className="text-sm font-semibold text-heading mb-3">Paste Contract Text</h3>
+            <p className="text-xs text-muted mb-4">Paste the full contract text below for direct NLP analysis and risk scoring.</p>
+            <textarea
+              value={pasteText}
+              onChange={e => setPasteText(e.target.value)}
+              placeholder="Paste your contract text here...&#10;&#10;Example: This Agreement may be terminated by either party upon thirty (30) days written notice to the other party..."
+              rows={10}
+              className="w-full px-4 py-3 rounded-xl bg-input border text-heading placeholder-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition resize-none font-mono text-sm leading-relaxed"
+            />
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-xs text-muted">{pasteText.length.toLocaleString()} characters</span>
+              <button
+                onClick={handlePasteAnalysis}
+                disabled={!pasteText.trim() || pasteProcessing || !backendOnline}
+                className="bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white px-6 py-3 rounded-xl font-semibold transition shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {pasteProcessing ? (
+                  <><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Analyzing...</>
+                ) : (
+                  <>🧠 Analyze Text</>
+                )}
+              </button>
+            </div>
+            {pasteError && (
+              <div className="mt-3 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                ❌ {pasteError}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NLP Results Preview */}
+        {nlpResult && !processing && (
+          <div className="mt-8 animate-slide-up">
+            <div className="glass-card rounded-2xl p-6 shadow-theme border border-emerald-200">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-10 w-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-lg animate-check-pop">✅</div>
+                <div>
+                  <h3 className="font-bold text-heading">AI Analysis Complete</h3>
+                  <p className="text-xs text-muted">Contract processed through OCR + NLP + Risk pipeline</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                <div className="bg-subtle rounded-xl p-4 border border-theme text-center">
+                  <div className="text-xs text-muted mb-1">Clause</div>
+                  <div className="text-sm font-bold text-heading">{nlpResult.clause}</div>
+                </div>
+                <div className="bg-subtle rounded-xl p-4 border border-theme text-center">
+                  <div className="text-xs text-muted mb-1">Confidence</div>
+                  <div className="text-sm font-bold text-heading">{nlpResult.confidence}%</div>
+                </div>
+                <div className="bg-subtle rounded-xl p-4 border border-theme text-center">
+                  <div className="text-xs text-muted mb-1">Risk Score</div>
+                  <div className="text-sm font-bold text-heading">{nlpResult.risk_score}/100</div>
+                </div>
+                <div className="bg-subtle rounded-xl p-4 border border-theme text-center">
+                  <div className="text-xs text-muted mb-1">Risk Level</div>
+                  <div className={`text-xs font-bold px-2.5 py-1 rounded-full inline-block border ${riskColor(nlpResult.risk_level)}`}>{nlpResult.risk_level}</div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => navigate('/results', { state: { result: nlpResult, fileName: results[0]?.file || 'Contract' } })}
+                className="w-full bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white py-3 rounded-xl font-semibold transition shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2"
+              >
+                🔎 View Full Analysis Results →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Error Results */}
+        {results.length > 0 && results.some(r => r.status === 'error') && !processing && (
+          <div className="mt-6 space-y-3">
+            {results.filter(r => r.status === 'error').map((r, i) => (
+              <div key={i} className="flex items-center gap-3 bg-card border border-red-200 rounded-xl p-4 shadow-theme">
+                <div className="h-10 w-10 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-lg">❌</div>
+                <div>
+                  <p className="font-semibold text-heading">{r.file}</p>
+                  <p className="text-sm text-red-500">{r.error}</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
