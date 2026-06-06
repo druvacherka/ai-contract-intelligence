@@ -3,11 +3,19 @@ from fastapi import UploadFile
 
 import os
 
+from services.ocr_service import (
+    extract_text
+)
+
+from services.nlp_service import (
+    analyze_text
+)
+
 router = APIRouter()
 
 
-@router.post("/upload")
-async def upload_contract(
+@router.post("/analyze-file")
+async def analyze_file(
     file: UploadFile
 ):
 
@@ -32,11 +40,16 @@ async def upload_contract(
 
         f.write(contents)
 
-    return {
+    text = extract_text(
+        file_path
+    )
 
-        "filename":
-            file.filename,
+    result = analyze_text(
+        text
+    )
 
-        "saved_to":
-            file_path
-    }
+    result["filename"] = (
+        file.filename
+    )
+
+    return result
