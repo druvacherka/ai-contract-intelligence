@@ -2,6 +2,25 @@ version: "3.9"
 
 services:
   # ──────────────────────────────────────────────
+  # Backend — FastAPI + OCR + NLP Pipeline
+  # ──────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/backend.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data-ocr-module:/app
+    environment:
+      - LOG_LEVEL=INFO
+      - OCR_DPI=300
+      - OCR_LANGUAGE=eng
+      - MAX_FILE_SIZE_MB=50
+    networks:
+      - app-network
+
+  # ──────────────────────────────────────────────
   # Frontend — React + Vite
   # ──────────────────────────────────────────────
   frontend:
@@ -13,6 +32,10 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    depends_on:
+      - backend
     networks:
       - app-network
 
@@ -27,6 +50,7 @@ services:
       - ./infra/docker/nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - frontend
+      - backend
     networks:
       - app-network
 
