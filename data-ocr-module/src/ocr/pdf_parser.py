@@ -294,6 +294,8 @@ class PDFParser:
                 result["needs_ocr"] = False
                 return result
             logger.info("pdfplumber returned empty text, trying PyMuPDF fallback")
+        except (ImportError, ModuleNotFoundError):
+            logger.warning("pdfplumber not installed, falling back to PyMuPDF")
         except PDFParseError as e:
             logger.warning("pdfplumber failed, trying PyMuPDF: {}", e)
 
