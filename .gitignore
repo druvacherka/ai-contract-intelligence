@@ -139,4 +139,4 @@ coverage.xml
 ml/models/legalbert_classifier/
 *.safetensors
 *.bin
-backend/uploads/backend/uploads/
+backend/uploads/
