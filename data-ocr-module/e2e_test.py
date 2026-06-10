@@ -1,5 +1,21 @@
+"""
+E2E NLP Clause Classification Test Suite.
+
+Tests all 10 supported clause types against the /analyze-text API endpoint.
+Validates that the NLP engine correctly classifies each clause type and
+returns the expected integration contract schema.
+
+Usage:
+    python e2e_test.py
+"""
+import sys
 import httpx
-import json
+
+# Fix Unicode output on Windows (cp1252 doesn't support special chars)
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
+
+BASE_URL = "http://localhost:8000"
 
 test_cases = [
     ("Termination", "Either party may terminate this agreement upon thirty days prior written notice. Right to terminate for cause applies."),
@@ -14,18 +30,30 @@ test_cases = [
     ("Non-Compete", "The contractor shall not directly or indirectly compete within a fifty mile radius for two years following termination."),
 ]
 
-all_passed = True
+print("=" * 90)
+print("  E2E NLP Clause Classification — 10 Clause Types")
+print("=" * 90)
+
+passed = 0
+failed = 0
 for expected, text in test_cases:
-    r = httpx.post("http://localhost:8000/analyze-text", json={"contract_text": text})
+    r = httpx.post(f"{BASE_URL}/analyze-text", json={"contract_text": text})
     data = r.json()
     status = "PASS" if data["clause"] == expected else "FAIL"
-    if status == "FAIL":
-        all_passed = False
+    if status == "PASS":
+        passed += 1
+    else:
+        failed += 1
     clause = data["clause"]
     conf = data["confidence"]
     risk = data["risk_score"]
     level = data["risk_level"]
-    print(f"{status} | {expected:20s} | Got: {clause:20s} | Conf: {conf:5.1f}% | Risk: {risk:3d} ({level})")
+    print(f"  {status} | {expected:20s} | Got: {clause:20s} | Conf: {conf:5.1f}% | Risk: {risk:3d} ({level})")
 
-print()
-print(f"Result: {'ALL 10 PASSED' if all_passed else 'SOME FAILED'}")
+print("=" * 90)
+print(f"  Results: {passed} passed, {failed} failed out of {len(test_cases)} tests")
+print("=" * 90)
+
+if failed > 0:
+    sys.exit(1)
+
