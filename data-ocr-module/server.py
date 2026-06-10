@@ -93,6 +93,8 @@ async def health_check():
             "scan_detector": "ready",
             "text_cleaner": "ready",
             "json_formatter": "ready",
+            "nlp_engine": "ready",
+            "risk_engine": "ready",
         },
     }
 
