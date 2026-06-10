@@ -6,9 +6,16 @@ import httpx
 import json
 import sys
 
+# Fix Unicode output on Windows (cp1252 doesn't support arrows/checkmarks)
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
+if sys.stderr.encoding != "utf-8":
+    sys.stderr.reconfigure(encoding="utf-8")
+
 BASE = "http://localhost:8000"
 client = httpx.Client(timeout=30)
 errors = []
+
 
 print("=" * 70)
 print("LIVE BROWSER FLOW TEST — Simulating Frontend JavaScript")
