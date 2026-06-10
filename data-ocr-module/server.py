@@ -327,8 +327,7 @@ async def upload_contract_nlp(file: UploadFile = File(...)):
         # ── PDF files ──
         elif file_ext == ".pdf":
             try:
-                # Try native text extraction first
-                doc_info = document_loader.load(save_path)
+                # Try native text extraction first (pdfplumber → PyMuPDF fallback)
                 result = pdf_parser.extract(save_path)
                 extracted_text = result.get("full_text", "")
 
@@ -345,14 +344,16 @@ async def upload_contract_nlp(file: UploadFile = File(...)):
                         logger.warning("OCR fallback failed for PDF: {}", ocr_err)
                         # Keep whatever native text we got
 
-            except PDFParseError as e:
+            except (PDFParseError, Exception) as e:
                 # PDF parse failed entirely, try pure OCR
+                logger.warning("PDF text extraction failed ({}), attempting OCR fallback", e)
                 try:
                     ocr_result = ocr_engine.ocr_pdf(save_path)
                     extracted_text = ocr_result.get("full_text", "")
                     used_ocr = True
                 except Exception:
                     raise HTTPException(status_code=422, detail=f"PDF parsing failed: {e}")
+
 
         # ── DOCX files ──
         elif file_ext in (".docx", ".doc"):
