@@ -171,12 +171,26 @@ docker-compose up --build
 
 ## 🧪 Running Tests
 
+### Unit Tests (Pytest)
+
 ```bash
 cd data-ocr-module
-python -m pytest src/tests/ -v
+# Run all unit tests (ignoring cuad dataset test if dependencies like pandas are missing)
+python -m pytest src/tests/ --ignore=src/tests/test_dataset.py -v
 ```
 
-**130+ tests** covering OCR, NLP, Risk, and API endpoints.
+### End-to-End & Browser Flow Verification
+
+These scripts test end-to-end integration and API-level contract adherence:
+
+```bash
+cd data-ocr-module
+# Run NLP API classification & risk scoring E2E tests
+python e2e_test.py
+
+# Run live frontend-to-backend browser flow simulation test
+python browser_flow_test.py
+```
 
 ---
 
