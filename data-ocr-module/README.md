@@ -219,21 +219,32 @@ Dual-engine extraction:
 
 ## 🧪 Testing
 
+### Running Unit Tests (Pytest)
+
 ```bash
-# Run all tests
-pytest
+# Run all tests (ignoring cuad dataset test if dependencies like pandas are missing)
+pytest --ignore=src/tests/test_dataset.py
 
 # Run with verbose output
 pytest -v
-
-# Run specific test file
-pytest src/tests/test_dataset.py
 
 # Run only non-OCR tests (no Tesseract needed)
 pytest -m "not ocr"
 
 # Run with coverage
 pytest --cov=src
+```
+
+### Running E2E & Browser Flow Simulation Verification
+
+These scripts test end-to-end integration and API-level contract adherence:
+
+```bash
+# Run NLP API classification & risk scoring E2E tests
+python e2e_test.py
+
+# Run live frontend-to-backend browser flow simulation test
+python browser_flow_test.py
 ```
 
 ---
