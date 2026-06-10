@@ -1,16 +1,40 @@
-// Frontend API service — placeholder
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
 
 export const api = {
   async healthCheck() {
-    const res = await fetch(`${API_BASE_URL}/health`)
-    return res.json()
+    const response = await fetch(
+      `${API_BASE_URL}/health`
+    );
+
+    return response.json();
   },
 
   async uploadContract(file) {
-    // TODO: Implement contract upload
-    throw new Error('Upload not yet implemented')
-  },
-}
+    const formData = new FormData();
 
-export default api
+    formData.append(
+      "file",
+      file
+    );
+
+    const response = await fetch(
+      `${API_BASE_URL}/analyze-file`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Contract analysis failed"
+      );
+    }
+
+    return response.json();
+  },
+};
+
+export default api;
