@@ -26,11 +26,17 @@ def client():
 # ── Health check ───────────────────────────────────────────
 
 def test_health(client):
-    """GET /health should return status healthy."""
+    """GET /health should return status healthy and expose status of all modules."""
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
+    assert "modules" in data
+    modules = data["modules"]
+    assert modules["document_loader"] == "ready"
+    assert modules["pdf_parser"] == "ready"
+    assert modules["nlp_engine"] == "ready"
+    assert modules["risk_engine"] == "ready"
 
 
 # ── Analyze text endpoint ─────────────────────────────────
