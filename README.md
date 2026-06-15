@@ -66,6 +66,17 @@ ai-contract-intelligence/
 │   │       ├── test_risk.py         # Risk engine tests
 │   │       └── test_api.py          # API endpoint tests
 │
+├── ml/                          # NLP & ML Engineering (Legal-BERT, Embeddings, FAISS)
+│   ├── api/                     # High-level Python interface
+│   ├── embeddings/              # Semantic embeddings & FAISS vector search
+│   ├── inference/               # Model inference (clause, severity, risk scoring)
+│   ├── training/                # Legal-BERT fine-tuning pipelines
+│   └── evaluation/              # Model performance evaluation & reports
+│
+├── backend/                     # Integrated FastAPI Backend (FastAPI, Uvicorn)
+│   ├── routes/                  # API endpoint routers (analyze, upload, etc.)
+│   └── services/                # Backend adapters (OCR, NLP, FAISS integration)
+│
 ├── infra/                       # DevOps & Infrastructure
 │   ├── docker/
 │   ├── github_actions/
@@ -155,6 +166,7 @@ docker-compose up --build
 | GET    | `/api/documents/{id}` | Get specific document                          |
 | POST   | `/upload-contract`    | **Full pipeline**: Upload → OCR → NLP → Risk   |
 | POST   | `/analyze-text`       | Analyze raw contract text (NLP + Risk)         |
+| POST   | `/analyze-file`       | Analyze file with Legal-BERT + Named Entity Extraction |
 
 ### Response Schema (NLP + Risk)
 
