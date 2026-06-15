@@ -84,6 +84,22 @@ export const api = {
 
     return res.json()
   },
+
+  async analyzeFile(file) {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const res = await fetch(`${API_BASE_URL}/analyze-file`, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!res.ok) {
+      throw new Error('Contract analysis failed')
+    }
+
+    return res.json()
+  },
 }
 
 export default api

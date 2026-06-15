@@ -288,6 +288,26 @@ export default function ContractResults() {
           </div>
         </div>
 
+        {/* Extracted Entities Card */}
+        {result.entities && result.entities.length > 0 && (
+          <div className="md:col-span-2 glass-card rounded-2xl p-8 shadow-theme result-card-enter stagger-5 mt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xs font-semibold text-brand-600 uppercase tracking-widest">🏷️ Extracted Legal Entities</span>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              {result.entities.map((entity, index) => (
+                <div
+                  key={index}
+                  className="text-sm px-3.5 py-2 rounded-xl bg-subtle border border-theme text-body flex items-center gap-2"
+                >
+                  <span className="font-semibold text-brand-600 dark:text-brand-400">{entity.text}</span>
+                  <span className="text-[10px] font-bold text-muted bg-card px-2 py-0.5 rounded border border-theme uppercase tracking-wider">{entity.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
           <button

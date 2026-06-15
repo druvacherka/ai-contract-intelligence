@@ -136,3 +136,8 @@ coverage.xml
 *.temp
 .sass-cache/
 .vite/
+# Trained ML models
+ml/models/legalbert_classifier/
+*.safetensors
+*.bin
+backend/uploads/

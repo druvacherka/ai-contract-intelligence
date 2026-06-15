@@ -45,11 +45,33 @@ export default function Upload() {
     }
   }
 
-  const handleDrag = (e) => { e.preventDefault(); setDragActive(e.type === 'dragenter' || e.type === 'dragover') }
-  const handleDrop = (e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files?.length) setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]) }
-  const handleChange = (e) => { if (e.target.files?.length) setFiles(prev => [...prev, ...Array.from(e.target.files)]) }
+  const handleDrag = (e) => {
+    e.preventDefault()
+    setDragActive(e.type === 'dragenter' || e.type === 'dragover')
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setDragActive(false)
+    if (e.dataTransfer.files?.length) {
+      setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)])
+    }
+  }
+
+  const handleChange = (e) => {
+    if (e.target.files?.length) {
+      setFiles(prev => [...prev, ...Array.from(e.target.files)])
+    }
+  }
+
   const removeFile = (i) => setFiles(files.filter((_, idx) => idx !== i))
-  const fmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
+
+  const fmt = (b) => {
+    if (b < 1024) return b + ' B'
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'
+    return (b / 1048576).toFixed(1) + ' MB'
+  }
+
   const ext = (name) => name.split('.').pop().toUpperCase()
 
   const simulateStages = async (stageKeys) => {
@@ -140,9 +162,9 @@ export default function Upload() {
   const getStageIndex = () => STAGES.findIndex(s => s.key === processingStage)
 
   const riskColor = (level) =>
-    level === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
-    level === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-    'bg-emerald-50 text-emerald-700 border-emerald-200'
+    level === 'High' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' :
+    level === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 dark:text-amber-400' :
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'
 
   return (
     <div className="min-h-screen bg-page">
@@ -164,7 +186,7 @@ export default function Upload() {
             <p className="text-body mt-1">Upload documents for AI-powered OCR extraction and NLP analysis.</p>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border ${backendOnline === true ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : backendOnline === false ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+            <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border ${backendOnline === true ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400' : backendOnline === false ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : 'bg-gray-50 text-gray-500 border-gray-200'}`}>
               <span className={`h-2 w-2 rounded-full ${backendOnline === true ? 'bg-emerald-500' : backendOnline === false ? 'bg-red-500' : 'bg-gray-400'}`}></span>
               {backendOnline === true ? 'Pipeline Online' : backendOnline === false ? 'Pipeline Offline' : 'Checking...'}
             </span>
@@ -234,7 +256,6 @@ export default function Upload() {
                     const currentIdx = getStageIndex()
                     const isDone = i < currentIdx || processingStage === 'complete'
                     const isActive = i === currentIdx && processingStage !== 'complete'
-                    const isPending = i > currentIdx && processingStage !== 'complete'
 
                     return (
                       <div key={stage.key} className="flex items-center gap-3">
@@ -364,6 +385,30 @@ export default function Upload() {
                   <div className={`text-xs font-bold px-2.5 py-1 rounded-full inline-block border ${riskColor(nlpResult.risk_level)}`}>{nlpResult.risk_level}</div>
                 </div>
               </div>
+
+              {/* Extracted Entities */}
+              {nlpResult.entities && nlpResult.entities.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-theme mb-5 animate-slide-up">
+                  <h4 className="font-semibold text-heading mb-3 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    🏷️ Extracted Entities
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {nlpResult.entities.map((entity, index) => (
+                      <div
+                        key={index}
+                        className="text-xs px-3 py-1.5 rounded-xl bg-subtle border border-theme text-body flex items-center gap-1.5"
+                      >
+                        <span className="font-semibold text-brand-600 dark:text-brand-400">
+                          {entity.text}
+                        </span>
+                        <span className="text-[9px] font-bold text-muted bg-card px-1.5 py-0.5 rounded border border-theme uppercase">
+                          {entity.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <button
                 onClick={() => navigate('/results', { state: { result: nlpResult, fileName: results[0]?.file || 'Contract' } })}
