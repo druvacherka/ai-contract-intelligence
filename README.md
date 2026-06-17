@@ -469,7 +469,7 @@ python browser_flow_test.py
 <tr>
 <td align="center"><b>Saniya</b><br/><sub>Frontend + DevOps</sub></td>
 <td align="center"><b>Prajwal</b><br/><sub>OCR + Data Processing</sub></td>
-<td align="center"><b>Dhruva</b><br/><sub>NLP / ML Engineering</sub></td>
+<td align="center"><b>Druva</b><br/><sub>NLP / ML Engineering</sub></td>
 <td align="center"><b>Vishwas Chandra</b><br/><sub>Backend / API</sub></td>
 </tr>
 </table>
