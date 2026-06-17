@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
 @import "tailwindcss";
 
 @theme {
@@ -134,6 +136,12 @@ html.light ::-webkit-scrollbar-track { background: #faf8ff; }
 html.light ::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 3px; }
 html.dark ::-webkit-scrollbar-track { background: #0c0a1d; }
 html.dark ::-webkit-scrollbar-thumb { background: #1e1b4b; border-radius: 3px; }
+
+/* Thin scrollbar for sidebar panels */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 2px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: rgba(139, 92, 246, 0.2) transparent; }
 
 /* Animations */
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

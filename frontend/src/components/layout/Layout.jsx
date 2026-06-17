@@ -18,7 +18,7 @@ export default function Layout() {
     <div className="min-h-screen bg-page flex flex-col">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
         <Link to="/" className="text-xl font-bold text-heading">
-          Contract<span className="text-brand-500">IQ</span>
+          Intelli<span className="text-brand-500">Analyze</span>
         </Link>
         <div className="flex items-center gap-1">
           {navLinks.map((link) => (

@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { Suspense, lazy } from 'react'
 import ErrorBoundary from './components/ErrorBoundary'
+import ProtectedRoute from './components/auth/ProtectedRoute'
 
 // Lazy-loaded pages for code splitting
 const Home = lazy(() => import('./pages/Home'))
@@ -36,14 +37,14 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/contract/:id" element={<ContractDetail />} />
-          <Route path="/results" element={<ContractResults />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+          <Route path="/contract/:id" element={<ProtectedRoute><ContractDetail /></ProtectedRoute>} />
+          <Route path="/results" element={<ProtectedRoute><ContractResults /></ProtectedRoute>} />
+          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+          <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/help" element={<Help />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

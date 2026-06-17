@@ -1,5 +1,19 @@
 // Frontend API service — connected to OCR Pipeline backend
+import supabase from './supabase'
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+async function getAuthHeaders() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.access_token) {
+      return { Authorization: 'Bearer ' + session.access_token }
+    }
+  } catch (e) {
+    console.warn('Failed to get auth session for headers:', e)
+  }
+  return {}
+}
 
 export const api = {
   async healthCheck() {
@@ -16,8 +30,10 @@ export const api = {
     const formData = new FormData()
     formData.append('file', file)
 
+    const authHeaders = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/api/upload`, {
       method: 'POST',
+      headers: { ...authHeaders },
       body: formData,
     })
 
@@ -43,12 +59,18 @@ export const api = {
   },
 
   async listDocuments() {
-    const res = await fetch(`${API_BASE_URL}/api/documents`)
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/documents`, {
+      headers: { ...authHeaders },
+    })
     return res.json()
   },
 
   async getDocument(docId) {
-    const res = await fetch(`${API_BASE_URL}/api/documents/${docId}`)
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/documents/${docId}`, {
+      headers: { ...authHeaders },
+    })
     if (!res.ok) throw new Error('Document not found')
     return res.json()
   },
@@ -57,8 +79,10 @@ export const api = {
     const formData = new FormData()
     formData.append('file', file)
 
+    const authHeaders = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/upload-contract`, {
       method: 'POST',
+      headers: { ...authHeaders },
       body: formData,
     })
 
@@ -71,9 +95,10 @@ export const api = {
   },
 
   async analyzeText(contractText) {
+    const authHeaders = await getAuthHeaders()
     const res = await fetch(`${API_BASE_URL}/analyze-text`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ contract_text: contractText }),
     })
 
@@ -85,20 +110,52 @@ export const api = {
     return res.json()
   },
 
-  async analyzeFile(file) {
-    const formData = new FormData()
-    formData.append('file', file)
-
-    const res = await fetch(`${API_BASE_URL}/analyze-file`, {
-      method: 'POST',
-      body: formData,
+  async getContracts() {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/contracts`, {
+      headers: { ...authHeaders },
     })
-
-    if (!res.ok) {
-      throw new Error('Contract analysis failed')
-    }
-
+    if (!res.ok) throw new Error('Failed to fetch contracts')
     return res.json()
+  },
+
+  async getContractById(id) {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/contracts/${id}`, {
+      headers: { ...authHeaders },
+    })
+    if (!res.ok) throw new Error('Contract not found')
+    return res.json()
+  },
+
+  async deleteContract(id) {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/contracts/${id}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders },
+    })
+    if (!res.ok) throw new Error('Failed to delete contract')
+    return res.json()
+  },
+
+  async searchContracts(query) {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      body: JSON.stringify({ query }),
+    })
+    if (!res.ok) throw new Error('Search failed')
+    return res.json()
+  },
+
+  async downloadReport(contractId) {
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`${API_BASE_URL}/api/report/${contractId}/pdf`, {
+      headers: { ...authHeaders },
+    })
+    if (!res.ok) throw new Error('Failed to download report')
+    return res.blob()
   },
 }
 

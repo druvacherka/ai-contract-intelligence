@@ -21,12 +21,10 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-cyan shadow-lg shadow-brand-500/20 transition-transform duration-300 group-hover:scale-110">
-              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+              <span className="text-white font-extrabold text-sm tracking-tighter">IA</span>
             </div>
             <span className="text-lg font-bold tracking-tight text-color-primary">
-              Contract<span className="gradient-text">IQ</span>
+              Intelli<span className="gradient-text">Analyze</span> AI
             </span>
           </Link>
 

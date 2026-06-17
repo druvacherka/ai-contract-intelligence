@@ -40,7 +40,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="text-xl font-bold text-heading">
-              Contract<span className="text-brand-500">IQ</span>
+              Intelli<span className="text-brand-500">Analyze</span>
             </Link>
             <p className="text-sm text-body mt-3 leading-relaxed">
               Enterprise-grade AI contract analysis. Extract clauses, assess risks, search semantically.
@@ -75,7 +75,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-theme flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted">© {currentYear} ContractIQ — Built by Saniya • Prajwal • Dhruva • Vishwas</p>
+          <p className="text-xs text-muted">© {currentYear} IntelliAnalyze AI — Built by Saniya • Prajwal • Dhruva • Vishwas</p>
           <p className="text-xs text-muted">React • FastAPI • PyTorch • Docker • Tailwind</p>
         </div>
       </div>
