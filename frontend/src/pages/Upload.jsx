@@ -4,12 +4,14 @@ import ThemeToggle from '../components/ThemeToggle'
 import api from '../services/api'
 
 const STAGES = [
-  { key: 'uploading', label: 'Uploading File', icon: '📤' },
-  { key: 'extracting', label: 'Extracting Text', icon: '📝' },
-  { key: 'ocr', label: 'Running OCR', icon: '🔍' },
-  { key: 'analyzing', label: 'Analyzing Contract', icon: '🧠' },
-  { key: 'scoring', label: 'Generating Risk Score', icon: '⚠️' },
-  { key: 'complete', label: 'Complete', icon: '✅' },
+  { key: 'uploading', label: 'Uploading Document', icon: '📤' },
+  { key: 'ocr', label: 'Agent 1: OCR Extraction', icon: '🔍' },
+  { key: 'cleaning', label: 'Agent 2: Text Cleaning', icon: '🧹' },
+  { key: 'ner', label: 'Agent 3: Entity Recognition', icon: '🏷️' },
+  { key: 'clause', label: 'Agent 4: Clause Detection', icon: '📋' },
+  { key: 'risk', label: 'Agent 5: Risk Analysis', icon: '⚠️' },
+  { key: 'summary', label: 'Agent 6: AI Summary', icon: '🤖' },
+  { key: 'compile', label: 'Agent 7: Final Compilation', icon: '✅' },
 ]
 
 export default function Upload() {
@@ -65,20 +67,21 @@ export default function Upload() {
   }
 
   const removeFile = (i) => setFiles(files.filter((_, idx) => idx !== i))
-
-  const fmt = (b) => {
-    if (b < 1024) return b + ' B'
-    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB'
-    return (b / 1048576).toFixed(1) + ' MB'
+  const previewFile = (file) => {
+    const url = URL.createObjectURL(file)
+    window.open(url, '_blank')
   }
-
+  const fmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
   const ext = (name) => name.split('.').pop().toUpperCase()
 
   const simulateStages = async (stageKeys) => {
     for (const key of stageKeys) {
       setProcessingStage(key)
-      if (key !== 'complete') {
-        await new Promise(r => setTimeout(r, 600))
+      if (key === 'uploading') addToast(`Uploading: ${file.name}`, 'info')
+      if (key === 'ocr') addToast(`Agent 1: Extracting text from: ${file.name}`, 'info')
+      if (key === 'clause') addToast(`Agent 4: Detecting clauses...`, 'info')
+      if (key !== 'compile') {
+        await new Promise(r => setTimeout(r, 650))
       }
     }
   }
@@ -96,18 +99,18 @@ export default function Upload() {
       setCurrentFile(file.name)
       setProgress(Math.round(((i) / files.length) * 100))
 
-      // Simulate stage progression
-      const stagePromise = simulateStages(['uploading', 'extracting', 'ocr', 'analyzing', 'scoring'])
+      const stagePromise = simulateStages(['uploading', 'ocr', 'cleaning', 'ner', 'clause', 'risk', 'summary'], file)
 
       try {
         const result = await api.uploadForAnalysis(file)
         await stagePromise
-        setProcessingStage('complete')
+        setProcessingStage('compile')
+        addToast(`Successfully analyzed: ${file.name}!`, 'success')
         allResults.push({ file: file.name, status: 'success', ...result })
         setNlpResult(result)
 
         // Save to localStorage for dashboard
-        const history = JSON.parse(localStorage.getItem('contractiq_history') || '[]')
+        const history = JSON.parse(localStorage.getItem('IntelliAnalyze AI_history') || '[]')
         history.unshift({
           ...result,
           fileName: file.name,
@@ -115,10 +118,11 @@ export default function Upload() {
           id: Date.now().toString(),
         })
         if (history.length > 50) history.length = 50
-        localStorage.setItem('contractiq_history', JSON.stringify(history))
+        localStorage.setItem('IntelliAnalyze AI_history', JSON.stringify(history))
       } catch (err) {
         await stagePromise
-        setProcessingStage('complete')
+        setProcessingStage('compile')
+        addToast(`Failed to parse ${file.name}: ${err.message}`, 'error')
         allResults.push({ file: file.name, status: 'error', error: err.message })
       }
       setResults([...allResults])
@@ -127,6 +131,16 @@ export default function Upload() {
     setProgress(100)
     setCurrentFile('')
     setProcessing(false)
+
+    // Auto-navigate to results if we have a result
+    const successResults = allResults.filter(r => r.status === 'success')
+    if (successResults.length > 0) {
+      const lastResult = successResults[successResults.length - 1]
+      const lastFileName = lastResult.file || files[files.length - 1]?.name || 'Contract'
+      setFiles([])
+      navigate('/results', { state: { result: lastResult, fileName: lastFileName } })
+      return
+    }
     setFiles([])
   }
 
@@ -139,8 +153,7 @@ export default function Upload() {
       const result = await api.analyzeText(pasteText)
       setNlpResult(result)
 
-      // Save to localStorage
-      const history = JSON.parse(localStorage.getItem('contractiq_history') || '[]')
+      const history = JSON.parse(localStorage.getItem('IntelliAnalyze AI_history') || '[]')
       history.unshift({
         ...result,
         fileName: 'Pasted Text',
@@ -148,7 +161,7 @@ export default function Upload() {
         id: Date.now().toString(),
       })
       if (history.length > 50) history.length = 50
-      localStorage.setItem('contractiq_history', JSON.stringify(history))
+      localStorage.setItem('IntelliAnalyze AI_history', JSON.stringify(history))
 
       // Navigate to results
       navigate('/results', { state: { result, fileName: 'Pasted Text' } })
@@ -169,7 +182,10 @@ export default function Upload() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
+          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/" className="text-sm text-nav hover:text-nav-active transition">Home</Link>
           <Link to="/upload" className="text-sm text-nav-active font-semibold">Upload</Link>
@@ -287,6 +303,25 @@ export default function Upload() {
                     <div className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full transition-all duration-500 ease-out" style={{ width: `${progress}%` }}></div>
                   </div>
                 </div>
+
+                {/* Preview while processing */}
+                {files.length > 0 && (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-subtle/35 border border-theme">
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">📄</span>
+                      <div>
+                        <p className="text-xs font-bold text-heading">{currentFile}</p>
+                        <p className="text-[10px] text-muted">Analysis in progress — you can preview the document while it processes</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => previewFile(files.find(f => f.name === currentFile) || files[0])}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white transition text-[10px] font-bold uppercase tracking-wider shadow-md shadow-brand-500/15"
+                    >
+                      👁️ Preview Document
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -301,7 +336,16 @@ export default function Upload() {
                         <div className="h-9 w-9 rounded-lg bg-subtle border border-theme flex items-center justify-center text-xs font-bold text-brand-600">{ext(f.name)}</div>
                         <div className="min-w-0"><p className="text-sm font-medium text-heading truncate">{f.name}</p><p className="text-xs text-muted">{fmt(f.size)}</p></div>
                       </div>
-                      <button onClick={e => { e.stopPropagation(); removeFile(i) }} className="text-muted hover:text-red-500 transition text-lg px-2" disabled={processing}>×</button>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); previewFile(f) }}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-50 border border-brand-200 text-brand-600 hover:bg-brand-100 dark:bg-brand-500/10 dark:border-brand-500/20 dark:text-brand-400 dark:hover:bg-brand-500/20 transition text-[10px] font-bold uppercase tracking-wider"
+                          title="Open document in new tab"
+                        >
+                          👁️ Preview
+                        </button>
+                        <button onClick={() => removeFile(i)} className="text-muted hover:text-red-500 transition text-lg leading-none px-1">×</button>
+                      </div>
                     </div>
                   ))}
                   <button

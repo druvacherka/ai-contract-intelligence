@@ -4,7 +4,7 @@ import ThemeToggle from '../components/ThemeToggle'
 
 const contractsDB = {
   1: {
-    name: 'NDA_Acme_Corp_2026.pdf', type: 'Non-Disclosure Agreement', parties: ['Acme Corp', 'ContractIQ Inc.'],
+    name: 'NDA_Acme_Corp_2026.pdf', type: 'Non-Disclosure Agreement', parties: ['Acme Corp', 'IntelliAnalyze AI Inc.'],
     date: 'May 11, 2026', expiry: 'May 11, 2027', risk: 'Low', score: 3.2, status: 'Active', pages: 8,
     clauses: [
       { id: 1, type: 'Confidentiality', text: 'Both parties agree to maintain strict confidentiality of all shared proprietary information for a period of 5 years.', risk: 'Low' },
@@ -13,11 +13,11 @@ const contractsDB = {
       { id: 4, type: 'Liability', text: 'Total liability under this agreement shall not exceed the total fees paid in the preceding 12 months.', risk: 'Medium' },
       { id: 5, type: 'Jurisdiction', text: 'This agreement shall be governed by the laws of the State of Karnataka, India.', risk: 'Low' },
     ],
-    entities: ['Acme Corp', 'ContractIQ Inc.', 'Karnataka', 'India', '$500,000', '12 months', '5 years'],
-    summary: 'Standard NDA between Acme Corp and ContractIQ covering mutual confidentiality obligations with a 5-year term.',
+    entities: ['Acme Corp', 'IntelliAnalyze AI Inc.', 'Karnataka', 'India', '$500,000', '12 months', '5 years'],
+    summary: 'Standard NDA between Acme Corp and IntelliAnalyze AI covering mutual confidentiality obligations with a 5-year term.',
   },
   2: {
-    name: 'Service_Agreement_v4.docx', type: 'Service Agreement', parties: ['TechVendor Ltd', 'ContractIQ Inc.'],
+    name: 'Service_Agreement_v4.docx', type: 'Service Agreement', parties: ['TechVendor Ltd', 'IntelliAnalyze AI Inc.'],
     date: 'May 10, 2026', expiry: 'Nov 10, 2026', risk: 'High', score: 8.1, status: 'Review', pages: 24,
     clauses: [
       { id: 1, type: 'Indemnification', text: 'Client shall indemnify vendor against all claims, damages, and expenses arising from use of the service.', risk: 'High' },
@@ -26,7 +26,7 @@ const contractsDB = {
       { id: 4, type: 'Data Processing', text: 'Vendor may process and store client data in any jurisdiction deemed necessary.', risk: 'Critical' },
       { id: 5, type: 'IP Assignment', text: 'All work products created during the engagement shall be owned exclusively by the vendor.', risk: 'High' },
     ],
-    entities: ['TechVendor Ltd', 'ContractIQ Inc.', '$2,000,000', '90 days', '1 year'],
+    entities: ['TechVendor Ltd', 'IntelliAnalyze AI Inc.', '$2,000,000', '90 days', '1 year'],
     summary: 'Service agreement with several high-risk clauses including broad indemnification and unfavorable IP assignment terms.',
   },
 }
@@ -36,13 +36,61 @@ export default function ContractDetail() {
   const contract = contractsDB[id] || contractsDB[1]
   const [activeTab, setActiveTab] = useState('clauses')
 
+  useEffect(() => {
+    async function loadContract() {
+      setLoading(true)
+      setError(null)
+      try {
+        const doc = await api.getDocument(id)
+        const mapped = {
+          name: doc.filename,
+          type: doc.document_type || doc.clause || 'Contract',
+          parties: doc.parties || ['Unknown Party', 'IntelliAnalyze AI Inc.'],
+          date: doc.metadata?.processed_at ? new Date(doc.metadata.processed_at).toLocaleDateString() : new Date().toLocaleDateString(),
+          expiry: 'N/A',
+          risk: doc.risk_level || 'Low',
+          score: doc.risk_score ? (doc.risk_score / 10).toFixed(1) : '0.0',
+          status: 'Processed',
+          pages: doc.pages || 1,
+          clauses: (doc.clauses || []).map((c, i) => ({
+            id: i + 1,
+            type: c.type,
+            text: c.text,
+            risk: c.risk_level
+          })),
+          entities: [
+            ...(doc.metadata?.word_count ? [`${doc.metadata.word_count} words`] : []),
+            ...(doc.metadata?.text_length ? [`${doc.metadata.text_length} characters`] : []),
+            ...(doc.processing_method ? [`Processed via ${doc.processing_method}`] : []),
+            ...(doc.clause ? [`Primary Clause: ${doc.clause}`] : [])
+          ],
+          summary: doc.summary?.join(' ') || 'No summary available.'
+        }
+        setContract(mapped)
+      } catch (err) {
+        console.warn(`Could not fetch document ${id} from API, checking local DB:`, err)
+        if (contractsDB[id]) {
+          setContract(contractsDB[id])
+        } else {
+          setContract(contractsDB[1])
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadContract()
+  }, [id])
+
   const riskColor = (r) => r === 'Critical' ? 'text-red-700 bg-red-50 border-red-200' : r === 'High' ? 'risk-high' : r === 'Medium' ? 'risk-med' : 'risk-low'
   const scoreColor = contract.score >= 7 ? 'text-red-600' : contract.score >= 4 ? 'text-amber-600' : 'text-emerald-600'
 
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
+          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/search" className="text-sm text-nav hover:text-nav-active transition">Search</Link>

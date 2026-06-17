@@ -1,48 +1,143 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
+import api from '../services/api'
 
 export default function Analytics() {
   const [timeRange, setTimeRange] = useState('30d')
+  const [contracts, setContracts] = useState([])
+  const [loaded, setLoaded] = useState(false)
 
-  const monthlyData = [
-    { month: 'Jan', contracts: 12, analyzed: 10, highRisk: 2 },
-    { month: 'Feb', contracts: 18, analyzed: 15, highRisk: 4 },
-    { month: 'Mar', contracts: 8, analyzed: 8, highRisk: 1 },
-    { month: 'Apr', contracts: 24, analyzed: 20, highRisk: 5 },
-    { month: 'May', contracts: 31, analyzed: 24, highRisk: 7 },
-  ]
-  const maxContracts = Math.max(...monthlyData.map(d => d.contracts))
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        let docs = []
+        try {
+          const data = await api.getContracts()
+          docs = data.contracts || data || []
+        } catch {
+          const data = await api.listDocuments()
+          docs = data.documents || []
+        }
+        if (Array.isArray(docs) && docs.length > 0) {
+          setContracts(docs)
+        }
+      } catch (err) {
+        console.error('Failed to load analytics data:', err)
+      } finally {
+        setLoaded(true)
+      }
+    }
+    fetchData()
+  }, [])
 
-  const riskBreakdown = [
-    { level: 'Low Risk', count: 45, pct: 45, color: 'bg-emerald-400', textColor: 'text-emerald-600' },
-    { level: 'Medium Risk', count: 30, pct: 30, color: 'bg-amber-400', textColor: 'text-amber-600' },
-    { level: 'High Risk', count: 20, pct: 20, color: 'bg-red-400', textColor: 'text-red-600' },
-    { level: 'Critical', count: 5, pct: 5, color: 'bg-red-600', textColor: 'text-red-700' },
-  ]
+  // Compute data from real contracts or fallback to mock
+  const hasRealData = contracts.length > 0
 
-  const clauseTypes = [
-    { type: 'Confidentiality', total: 89, avgRisk: 2.1 },
-    { type: 'Indemnification', total: 67, avgRisk: 6.8 },
-    { type: 'Termination', total: 74, avgRisk: 4.2 },
-    { type: 'Non-Compete', total: 42, avgRisk: 5.9 },
-    { type: 'IP Assignment', total: 31, avgRisk: 7.4 },
-    { type: 'Liability Cap', total: 56, avgRisk: 5.1 },
-    { type: 'Force Majeure', total: 28, avgRisk: 3.3 },
-    { type: 'Data Privacy', total: 39, avgRisk: 6.2 },
-  ]
+  // Monthly volume data
+  const computeMonthlyData = () => {
+    if (!hasRealData) {
+      return [
+        { month: 'Jan', contracts: 12, analyzed: 10, highRisk: 2 },
+        { month: 'Feb', contracts: 18, analyzed: 15, highRisk: 4 },
+        { month: 'Mar', contracts: 8, analyzed: 8, highRisk: 1 },
+        { month: 'Apr', contracts: 24, analyzed: 20, highRisk: 5 },
+        { month: 'May', contracts: 31, analyzed: 24, highRisk: 7 },
+      ]
+    }
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const buckets = {}
+    contracts.forEach(c => {
+      const d = new Date(c.processed_at || c.created_at || Date.now())
+      const key = monthNames[d.getMonth()]
+      if (!buckets[key]) buckets[key] = { month: key, contracts: 0, analyzed: 0, highRisk: 0 }
+      buckets[key].contracts++
+      if (c.clause && c.clause !== 'Unknown') buckets[key].analyzed++
+      if (c.risk_level === 'High') buckets[key].highRisk++
+    })
+    const result = Object.values(buckets)
+    return result.length > 0 ? result.slice(-5) : [{ month: 'Now', contracts: contracts.length, analyzed: contracts.length, highRisk: 0 }]
+  }
+
+  const monthlyData = computeMonthlyData()
+  const maxContracts = Math.max(...monthlyData.map(d => d.contracts), 1)
+
+  // Risk breakdown
+  const computeRiskBreakdown = () => {
+    if (!hasRealData) {
+      return [
+        { level: 'Low Risk', count: 45, pct: 45, color: 'bg-emerald-400', textColor: 'text-emerald-600' },
+        { level: 'Medium Risk', count: 30, pct: 30, color: 'bg-amber-400', textColor: 'text-amber-600' },
+        { level: 'High Risk', count: 20, pct: 20, color: 'bg-red-400', textColor: 'text-red-600' },
+        { level: 'Critical', count: 5, pct: 5, color: 'bg-red-600', textColor: 'text-red-700' },
+      ]
+    }
+    const total = contracts.length || 1
+    const low = contracts.filter(c => c.risk_level === 'Low').length
+    const med = contracts.filter(c => c.risk_level === 'Medium').length
+    const high = contracts.filter(c => c.risk_level === 'High').length
+    const critical = contracts.filter(c => (c.risk_score || 0) >= 90).length
+    return [
+      { level: 'Low Risk', count: low, pct: Math.round((low/total)*100), color: 'bg-emerald-400', textColor: 'text-emerald-600' },
+      { level: 'Medium Risk', count: med, pct: Math.round((med/total)*100), color: 'bg-amber-400', textColor: 'text-amber-600' },
+      { level: 'High Risk', count: high, pct: Math.round((high/total)*100), color: 'bg-red-400', textColor: 'text-red-600' },
+      { level: 'Critical', count: critical, pct: Math.round((critical/total)*100), color: 'bg-red-600', textColor: 'text-red-700' },
+    ]
+  }
+
+  const riskBreakdown = computeRiskBreakdown()
+
+  // Clause types
+  const computeClauseTypes = () => {
+    if (!hasRealData) {
+      return [
+        { type: 'Confidentiality', total: 89, avgRisk: 2.1 },
+        { type: 'Indemnification', total: 67, avgRisk: 6.8 },
+        { type: 'Termination', total: 74, avgRisk: 4.2 },
+        { type: 'Non-Compete', total: 42, avgRisk: 5.9 },
+        { type: 'IP Assignment', total: 31, avgRisk: 7.4 },
+        { type: 'Liability Cap', total: 56, avgRisk: 5.1 },
+        { type: 'Force Majeure', total: 28, avgRisk: 3.3 },
+        { type: 'Data Privacy', total: 39, avgRisk: 6.2 },
+      ]
+    }
+    const clauseBuckets = {}
+    contracts.forEach(c => {
+      const clause = c.clause || 'Unknown'
+      if (clause === 'Unknown') return
+      if (!clauseBuckets[clause]) clauseBuckets[clause] = { type: clause, total: 0, riskSum: 0 }
+      clauseBuckets[clause].total++
+      clauseBuckets[clause].riskSum += (c.risk_score || 0)
+    })
+    return Object.values(clauseBuckets).map(b => ({
+      type: b.type,
+      total: b.total,
+      avgRisk: b.total > 0 ? parseFloat((b.riskSum / b.total / 10).toFixed(1)) : 0,
+    })).sort((a,b) => b.total - a.total).slice(0, 8)
+  }
+
+  const clauseTypes = computeClauseTypes()
+
+  // Top metrics
+  const totalContracts = hasRealData ? contracts.length : 93
+  const avgRiskScore = hasRealData && contracts.length > 0
+    ? (contracts.reduce((s,c) => s + (c.risk_score||0), 0) / contracts.length / 10).toFixed(1)
+    : '4.8'
+  const clausesExtracted = hasRealData
+    ? contracts.filter(c => c.clause && c.clause !== 'Unknown').length
+    : '1,247'
 
   const topMetrics = [
-    { label: 'Total Contracts', value: '93', change: '+12%', icon: '📄', up: true },
-    { label: 'Avg Risk Score', value: '4.8', change: '-0.3', icon: '📊', up: false },
-    { label: 'Clauses Extracted', value: '1,247', change: '+18%', icon: '📑', up: true },
+    { label: 'Total Contracts', value: String(totalContracts), change: hasRealData ? 'live' : '+12%', icon: '📄', up: true },
+    { label: 'Avg Risk Score', value: avgRiskScore, change: hasRealData ? 'live' : '-0.3', icon: '📊', up: false },
+    { label: 'Clauses Extracted', value: String(clausesExtracted), change: hasRealData ? 'live' : '+18%', icon: '📑', up: true },
     { label: 'Processing Time', value: '2.3s', change: '-15%', icon: '⚡', up: false },
   ]
 
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading">Intelli<span className="text-brand-500">Analyze</span></Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/analytics" className="text-sm text-nav-active font-semibold">Analytics</Link>

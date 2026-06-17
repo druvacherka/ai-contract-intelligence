@@ -19,18 +19,118 @@ export default function Search() {
   const [isSearching, setIsSearching] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault()
     if (!query.trim()) return
     setIsSearching(true)
     setHasSearched(true)
+
+    // Try vector search first
+    try {
+      const searchData = await api.searchContracts(query)
+      const vectorResults = (searchData.results || searchData || []).map(r => ({
+        id: r.document_id || r.id,
+        name: r.filename || r.fileName || 'Unknown',
+        relevance: r.similarity_score != null ? Math.round(r.similarity_score * 100) : (r.relevance || 80),
+        snippet: r.text_preview || r.snippet || r.contract_text?.slice(0, 150) || 'No preview available.',
+        risk: r.risk_level || 'Low',
+        date: r.processed_at ? (() => {
+          const d = new Date(r.processed_at)
+          const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+          return `${months[d.getMonth()]} ${d.getDate()}`
+        })() : 'N/A',
+        clauses: r.num_clauses || r.num_sentences || 0,
+      }))
+
+      let filtered = vectorResults
+      if (riskFilter !== 'all') {
+        filtered = filtered.filter(r => r.risk === riskFilter)
+      }
+      setResults(filtered)
+      setIsSearching(false)
+      return
+    } catch (err) {
+      console.warn('Vector search failed, falling back to client-side:', err)
+    }
+
+    // Fallback: client-side filtering
     setTimeout(() => {
-      let filtered = mockResults.filter(r =>
-        r.name.toLowerCase().includes(query.toLowerCase()) ||
-        r.snippet.toLowerCase().includes(query.toLowerCase())
-      )
-      if (filtered.length === 0) filtered = mockResults.slice(0, 3)
-      if (riskFilter !== 'all') filtered = filtered.filter(r => r.risk === riskFilter)
+      let filtered = allDocs.map(doc => {
+        const filename = doc.filename || ''
+        const docType = doc.document_type || ''
+        const clause = doc.clause || ''
+        const preview = doc.text_preview || ''
+        
+        const q = query.toLowerCase()
+
+        let relevance = 0
+        if (filename.toLowerCase().includes(q)) relevance += 50
+        if (preview.toLowerCase().includes(q)) relevance += 30
+        if (clause.toLowerCase().includes(q)) relevance += 20
+
+        if (relevance === 0) return null
+
+        let snippet = preview
+        if (snippet) {
+          const idx = snippet.toLowerCase().indexOf(q)
+          if (idx !== -1) {
+            const start = Math.max(0, idx - 40)
+            const end = Math.min(snippet.length, idx + q.length + 60)
+            snippet = snippet.slice(start, end)
+            if (start > 0) snippet = '...' + snippet
+            if (end < preview.length) snippet = snippet + '...'
+          } else {
+            snippet = snippet.slice(0, 120) + '...'
+          }
+        } else {
+          snippet = 'No preview text available.'
+        }
+
+        const dateObj = doc.processed_at ? new Date(doc.processed_at) : new Date()
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        const formattedDate = `${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}`
+
+        return {
+          id: doc.document_id,
+          name: filename,
+          relevance: Math.min(99, 60 + relevance),
+          snippet: snippet,
+          risk: doc.risk_level || 'Low',
+          date: formattedDate,
+          clauses: doc.num_sentences || 10,
+        }
+      }).filter(Boolean)
+
+      if (filtered.length === 0) {
+        filtered = mockResults.filter(r =>
+          r.name.toLowerCase().includes(query.toLowerCase()) ||
+          r.snippet.toLowerCase().includes(query.toLowerCase())
+        )
+        if (filtered.length === 0) {
+          filtered = mockResults.slice(0, 3)
+        }
+      }
+
+      if (riskFilter !== 'all') {
+        filtered = filtered.filter(r => r.risk === riskFilter)
+      }
+
+      if (dateFilter !== 'all') {
+        const now = new Date()
+        const days = dateFilter === '7d' ? 7 : dateFilter === '30d' ? 30 : 90
+        const cutoff = new Date(now.setDate(now.getDate() - days))
+        
+        filtered = filtered.filter(r => {
+          if (r.id.toString().length < 5) return true // Mock results
+          try {
+            const itemDate = new Date(r.date)
+            return itemDate >= cutoff
+          } catch {
+            return true
+          }
+        })
+      }
+
       setResults(filtered)
       setIsSearching(false)
     }, 600)
@@ -41,7 +141,10 @@ export default function Search() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
+          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/search" className="text-sm text-nav-active font-semibold">Search</Link>
