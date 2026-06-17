@@ -9,7 +9,9 @@ from dotenv import load_dotenv
 
 # Load .env file from project root
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = _PROJECT_ROOT.parent  # ai-contract-intelligence root
 load_dotenv(_PROJECT_ROOT / ".env")
+load_dotenv(_REPO_ROOT / ".env")
 
 
 class Config:
@@ -24,6 +26,7 @@ class Config:
     SCHEMAS_DIR: Path = _PROJECT_ROOT / "datasets" / "schemas"
     UPLOADS_DIR: Path = _PROJECT_ROOT / "uploads"
     LOGS_DIR: Path = _PROJECT_ROOT / "logs"
+    REPORTS_DIR: Path = _PROJECT_ROOT / "reports"
 
     # --- Tesseract OCR ---
     @staticmethod
@@ -65,7 +68,7 @@ class Config:
     )
 
     # --- Processing Settings ---
-    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "50"))
+    MAX_FILE_SIZE_MB: int = int(os.getenv("MAX_FILE_SIZE_MB", "100"))
     OCR_DPI: int = int(os.getenv("OCR_DPI", "300"))
     OCR_LANGUAGE: str = os.getenv("OCR_LANGUAGE", "eng")
     BATCH_SIZE: int = int(os.getenv("BATCH_SIZE", "10"))
@@ -77,6 +80,27 @@ class Config:
 
     # --- SpaCy ---
     SPACY_MODEL: str = os.getenv("SPACY_MODEL", "en_core_web_sm")
+
+    # --- Supabase (Auth Only) ---
+    SUPABASE_URL: str = os.getenv("SUPABASE_URL", "")
+    SUPABASE_ANON_KEY: str = os.getenv("SUPABASE_ANON_KEY", "")
+    SUPABASE_SERVICE_ROLE_KEY: str = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+
+    # --- MongoDB (Data Storage) ---
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
+    MONGODB_DB_NAME: str = os.getenv("MONGODB_DB_NAME", "contract_intelligence")
+
+    # --- Google Gemini AI ---
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+
+    # --- Groq AI (Fallback) ---
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+    # --- Vector Search ---
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    EMBEDDING_DIMENSIONS: int = 384
 
     # --- Supported File Types ---
     SUPPORTED_EXTENSIONS: set[str] = {
@@ -94,6 +118,7 @@ class Config:
             cls.SCHEMAS_DIR,
             cls.UPLOADS_DIR,
             cls.LOGS_DIR,
+            cls.REPORTS_DIR,
         ]:
             dir_path.mkdir(parents=True, exist_ok=True)
 
