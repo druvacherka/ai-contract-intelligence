@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { useNotification } from '../context/NotificationContext'
 
 const STAGES = [
   { key: 'uploading', label: 'Uploading Document', icon: '📤' },
@@ -16,6 +18,8 @@ const STAGES = [
 
 export default function Upload() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const { addToast } = useNotification()
   const [activeTab, setActiveTab] = useState('upload') // 'upload' or 'paste'
   const [dragActive, setDragActive] = useState(false)
   const [files, setFiles] = useState([])
@@ -74,14 +78,14 @@ export default function Upload() {
   const fmt = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : (b / 1048576).toFixed(1) + ' MB'
   const ext = (name) => name.split('.').pop().toUpperCase()
 
-  const simulateStages = async (stageKeys) => {
+  const simulateStages = async (stageKeys, file) => {
     for (const key of stageKeys) {
       setProcessingStage(key)
       if (key === 'uploading') addToast(`Uploading: ${file.name}`, 'info')
       if (key === 'ocr') addToast(`Agent 1: Extracting text from: ${file.name}`, 'info')
       if (key === 'clause') addToast(`Agent 4: Detecting clauses...`, 'info')
       if (key !== 'compile') {
-        await new Promise(r => setTimeout(r, 650))
+        await new Promise(r => setTimeout(r, 1000))
       }
     }
   }
@@ -184,13 +188,28 @@ export default function Upload() {
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
         <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
-          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+          <span>Intelli<span className="text-brand-500">Analyze</span> AI</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/" className="text-sm text-nav hover:text-nav-active transition">Home</Link>
           <Link to="/upload" className="text-sm text-nav-active font-semibold">Upload</Link>
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
+          <Link to="/settings" className="text-sm text-nav hover:text-nav-active transition">Profile</Link>
           <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <Link to="/settings" className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-white text-xs font-bold uppercase cursor-pointer hover:scale-105 transition" title={user?.name || 'User'}>
+              {user?.name?.[0] || 'U'}
+            </Link>
+            <button
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -267,27 +286,31 @@ export default function Upload() {
             {processing && processingStage && (
               <div className="mt-6 bg-card border border-theme rounded-2xl p-6 shadow-theme">
                 <h3 className="text-sm font-semibold text-heading mb-4">Processing Pipeline</h3>
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
                   {STAGES.map((stage, i) => {
                     const currentIdx = getStageIndex()
-                    const isDone = i < currentIdx || processingStage === 'complete'
-                    const isActive = i === currentIdx && processingStage !== 'complete'
+                    const isDone = i < currentIdx || processingStage === 'compile'
+                    const isActive = i === currentIdx && processingStage !== 'compile'
 
                     return (
-                      <div key={stage.key} className="flex items-center gap-3">
-                        <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      <div key={stage.key} className={`flex flex-col items-center text-center p-3 rounded-xl border transition-all ${
+                        isDone ? 'bg-emerald-500/5 border-emerald-500/20' :
+                        isActive ? 'bg-brand-500/5 border-brand-500/20 shadow-sm' :
+                        'bg-subtle/50 border-theme opacity-60'
+                      }`}>
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold mb-2 transition-all ${
                           isDone ? 'bg-emerald-500 text-white' :
                           isActive ? 'bg-brand-500 text-white step-active' :
-                          'bg-subtle border border-theme text-muted'
+                          'bg-card border border-theme text-muted'
                         }`}>
-                          {isDone ? '✓' : isActive ? '●' : '○'}
+                          {isDone ? '✓' : stage.icon}
                         </div>
-                        <span className={`text-sm font-medium ${
+                        <span className={`text-[10px] font-bold uppercase tracking-wider block ${
                           isDone ? 'text-emerald-600' :
-                          isActive ? 'text-brand-600 font-semibold' :
+                          isActive ? 'text-brand-600 font-extrabold' :
                           'text-muted'
                         }`}>
-                          {stage.icon} {stage.label}{isActive ? '...' : ''}
+                          {stage.label.replace('Agent ', 'A')}
                         </span>
                       </div>
                     )

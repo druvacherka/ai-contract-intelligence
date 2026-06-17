@@ -1,6 +1,7 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
+import { useAuth } from '../context/AuthContext'
 
 const CLAUSE_ICONS = {
   'Termination': '⚖️',
@@ -110,12 +111,14 @@ function ConfidenceBar({ value }) {
 export default function ContractResults() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const [mounted, setMounted] = useState(false)
   const [selectedClause, setSelectedClause] = useState(null)
   const [showSummaryView, setShowSummaryView] = useState(false)
   const [fullscreenPanel, setFullscreenPanel] = useState(null) // 'viewer' | 'analytics' | null
 
   const result = location.state?.result || null
+  const activeResult = result
   const fileName = location.state?.fileName || 'Unknown Document'
 
   useEffect(() => {
@@ -336,6 +339,18 @@ export default function ContractResults() {
     return sections
   }
 
+  const renderParagraphs = () => {
+    if (!contract_text) return <p className="text-sm text-muted">No contract text available.</p>
+    return contract_text.split('\n').map((para, idx) => {
+      if (!para.trim()) return null
+      return (
+        <p key={idx} className="text-sm text-body leading-relaxed mb-4">
+          {para}
+        </p>
+      )
+    })
+  }
+
   return (
     <div className="min-h-screen bg-page">
       {/* Nav */}
@@ -349,6 +364,20 @@ export default function ContractResults() {
           <Link to="/upload" className="text-sm text-nav hover:text-nav-active transition">Upload</Link>
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-white text-xs font-bold uppercase cursor-pointer" title={user?.name || 'User'}>
+              {user?.name?.[0] || 'U'}
+            </div>
+            <button
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 

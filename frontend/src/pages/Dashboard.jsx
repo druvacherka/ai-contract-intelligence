@@ -1,9 +1,16 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
+import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
+import { useNotification } from '../context/NotificationContext'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
+  const { addToast } = useNotification()
   const [history, setHistory] = useState([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // ── Migrate old localStorage keys from before the rename ──
@@ -110,6 +117,34 @@ export default function Dashboard() {
     loadData()
   }, [])
 
+  const handleDelete = async (id, event) => {
+    event.stopPropagation()
+    event.preventDefault()
+    if (!window.confirm("Are you sure you want to delete this contract?")) return
+
+    try {
+      // Try to delete from API
+      try {
+        if (id) {
+          await api.deleteContract(id)
+        }
+      } catch (err) {
+        console.warn("Could not delete from backend API:", err.message)
+      }
+
+      // Delete from LocalStorage
+      const localHistory = JSON.parse(localStorage.getItem('IntelliAnalyze AI_history') || '[]')
+      const updated = localHistory.filter(item => (item.document_id || item.id) !== id)
+      localStorage.setItem('IntelliAnalyze AI_history', JSON.stringify(updated))
+
+      // Update state
+      setHistory(prev => prev.filter(item => (item.document_id || item.id) !== id))
+      addToast('Contract deleted successfully.', 'success')
+    } catch (err) {
+      addToast(`Error deleting contract: ${err.message}`, 'error')
+    }
+  }
+
   // Compute dynamic stats
   const totalContracts = history.length
   const analyzed = history.filter(h => h.clause && h.clause !== 'Unknown').length
@@ -173,14 +208,28 @@ export default function Dashboard() {
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
         <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
           <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
-          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+          <span>Intelli<span className="text-brand-500">Analyze</span> AI</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link to="/" className="text-sm text-nav hover:text-nav-active transition">Home</Link>
           <Link to="/upload" className="text-sm text-nav hover:text-nav-active transition">Upload</Link>
           <Link to="/dashboard" className="text-sm text-nav-active font-semibold">Dashboard</Link>
+          <Link to="/settings" className="text-sm text-nav hover:text-nav-active transition">Profile</Link>
           <ThemeToggle />
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-white text-xs font-bold">P</div>
+          <div className="flex items-center gap-2">
+            <Link to="/settings" className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-white text-xs font-bold uppercase cursor-pointer hover:scale-105 transition" title={user?.name || 'User'}>
+              {user?.name?.[0] || 'U'}
+            </Link>
+            <button
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -220,28 +269,41 @@ export default function Dashboard() {
               <div className="lg:col-span-2 bg-card border border-theme rounded-2xl p-6 shadow-theme">
                 <h2 className="font-semibold text-heading mb-4">Recent Analysis</h2>
                 <div className="space-y-2">
-                  {recent.map((r, i) => (
-                    <Link
-                      key={i}
-                      to="/results"
-                      state={{ result: { clause: r.clause, confidence: r.confidence, risk_score: r.risk_score, risk_level: r.risk_level }, fileName: r.fileName }}
-                      className="flex items-center justify-between p-3 rounded-xl bg-card-hover transition group"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-9 w-9 rounded-lg bg-subtle border border-theme flex items-center justify-center text-sm">
-                          {clauseIcon(r.clause)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-heading truncate">{r.fileName || 'Contract'}</p>
-                          <p className="text-xs text-muted">{r.clause} • {r.confidence}% confidence</p>
-                        </div>
+                  {recent.map((r, i) => {
+                    const itemId = r.document_id || r.id
+                    return (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-card-hover hover:bg-subtle/30 transition group relative">
+                        <Link
+                          to="/results"
+                          state={{ result: { clause: r.clause, confidence: r.confidence, risk_score: r.risk_score, risk_level: r.risk_level }, fileName: r.fileName }}
+                          className="flex items-center justify-between flex-1 min-w-0 pr-4"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="h-9 w-9 rounded-lg bg-subtle border border-theme flex items-center justify-center text-sm">
+                              {clauseIcon(r.clause)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium text-heading truncate">{r.fileName || 'Contract'}</p>
+                              <p className="text-xs text-muted">{r.clause} • {r.confidence}% confidence</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-semibold text-heading">{r.risk_score}</span>
+                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${rc(r.risk_level)}`}>{r.risk_level}</span>
+                          </div>
+                        </Link>
+                        <button
+                          onClick={(e) => handleDelete(itemId, e)}
+                          title="Delete contract"
+                          className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-heading">{r.risk_score}</span>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${rc(r.risk_level)}`}>{r.risk_level}</span>
-                      </div>
-                    </Link>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 

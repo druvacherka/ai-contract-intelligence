@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
+import { useAuth } from '../context/AuthContext'
 
 const mockResults = [
   { id: 1, name: 'NDA_Acme_Corp_2026.pdf', relevance: 96, snippet: 'This Non-Disclosure Agreement contains confidentiality clauses binding both parties...', risk: 'Low', date: 'May 11', clauses: 12 },
@@ -11,6 +12,8 @@ const mockResults = [
 ]
 
 export default function Search() {
+  const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const [query, setQuery] = useState('')
   const [searchType, setSearchType] = useState('semantic')
   const [riskFilter, setRiskFilter] = useState('all')
@@ -150,6 +153,20 @@ export default function Search() {
           <Link to="/search" className="text-sm text-nav-active font-semibold">Search</Link>
           <Link to="/upload" className="text-sm text-nav hover:text-nav-active transition">Upload</Link>
           <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-white text-xs font-bold uppercase cursor-pointer" title={user?.name || 'User'}>
+              {user?.name?.[0] || 'U'}
+            </div>
+            <button
+              onClick={async () => {
+                await logout()
+                navigate('/login')
+              }}
+              className="text-xs bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-lg font-semibold transition cursor-pointer"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 

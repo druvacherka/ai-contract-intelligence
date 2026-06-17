@@ -1,10 +1,17 @@
 // Frontend API service — connected to OCR Pipeline backend
 import supabase from './supabase'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://intellianalyze-api.onrender.com'
 
 async function getAuthHeaders() {
   try {
+    const userStr = localStorage.getItem('IntelliAnalyze AI_user')
+    if (userStr) {
+      const user = JSON.parse(userStr)
+      if (user?.id === 'demo-user-id') {
+        return { Authorization: 'Bearer demo-token' }
+      }
+    }
     const { data: { session } } = await supabase.auth.getSession()
     if (session?.access_token) {
       return { Authorization: 'Bearer ' + session.access_token }

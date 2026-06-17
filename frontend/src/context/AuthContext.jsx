@@ -167,6 +167,21 @@ export function AuthProvider({ children }) {
     if (error) throw error
   }, [])
 
+  const loginAsDemo = useCallback(() => {
+    setIsLoading(true)
+    const demoUser = {
+      id: 'demo-user-id',
+      email: 'demo@intellianalyze.ai',
+      name: 'Demo Analyst',
+      avatar: null,
+      role: 'admin',
+      joinedAt: new Date().toISOString(),
+    }
+    setUser(demoUser)
+    localStorage.setItem('IntelliAnalyze AI_user', JSON.stringify(demoUser))
+    setIsLoading(false)
+  }, [])
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -178,6 +193,7 @@ export function AuthProvider({ children }) {
       logout,
       updateProfile,
       loginWithGoogle,
+      loginAsDemo,
       session,
     }}>
       {children}
