@@ -464,7 +464,6 @@ export default function ContractResults() {
                 </div>
               </div>
             </div>
-          </div>
 
             {/* Metrics row */}
             <div className="grid grid-cols-2 gap-4">
