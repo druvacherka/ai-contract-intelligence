@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 
 const faqs = [
-  { q: 'What file formats does ContractIQ support?', a: 'ContractIQ supports PDF, DOCX, DOC, and TXT file formats. Scanned PDFs are processed through our OCR engine (Tesseract) to extract text before analysis.' },
+  { q: 'What file formats does IntelliAnalyze AI support?', a: 'IntelliAnalyze AI supports PDF, DOCX, DOC, and TXT file formats. Scanned PDFs are processed through our OCR engine (Tesseract) to extract text before analysis.' },
   { q: 'How does the AI risk scoring work?', a: 'Our NLP engine uses fine-tuned transformer models to analyze contract clauses. Each clause is scored on a 1-10 risk scale based on factors like unfavorable terms, ambiguous language, missing protections, and compliance gaps. The overall contract score is a weighted average of individual clause risks.' },
   { q: 'Is my contract data secure?', a: 'Yes. All data is encrypted at rest (AES-256) and in transit (TLS 1.3). We process documents in isolated containers and never share your data with third parties. You can delete your data at any time from Settings.' },
   { q: 'What is semantic search?', a: 'Semantic search uses AI vector embeddings to understand the meaning behind your query, not just keyword matching. This allows you to search for concepts like "penalty for late delivery" and find relevant clauses even if they use different wording.' },
   { q: 'Can I invite team members?', a: 'Yes! Navigate to the Team page to invite colleagues. You can assign roles (Viewer, Analyst, Manager, Admin) to control access levels. Team members can collaborate on contract reviews in real-time.' },
   { q: 'How long does contract analysis take?', a: 'Most contracts are analyzed in 2-5 seconds. Large documents (100+ pages) or scanned PDFs requiring OCR may take up to 30 seconds. You can track progress in real-time on the Upload page.' },
-  { q: 'What clause types can ContractIQ detect?', a: 'We detect 15+ clause types including: Confidentiality, Indemnification, Termination, Non-Compete, IP Assignment, Liability Cap, Force Majeure, Data Privacy, Auto-Renewal, Governing Law, Warranty, Payment Terms, and more.' },
+  { q: 'What clause types can IntelliAnalyze AI detect?', a: 'We detect 15+ clause types including: Confidentiality, Indemnification, Termination, Non-Compete, IP Assignment, Liability Cap, Force Majeure, Data Privacy, Auto-Renewal, Governing Law, Warranty, Payment Terms, and more.' },
   { q: 'Can I export analysis results?', a: 'Yes. You can export contract analysis as PDF reports, CSV data, or JSON format from the Dashboard. Team plans include bulk export and API access for integration with your existing tools.' },
 ]
 
@@ -18,7 +18,7 @@ const guides = [
   { icon: '🔍', title: 'Search Guide', desc: 'Master semantic search to find exactly what you need across all contracts.', link: '/search' },
   { icon: '📊', title: 'Understanding Risk Scores', desc: 'Deep dive into how risk scoring works and what each level means.', link: '/analytics' },
   { icon: '👥', title: 'Team Collaboration', desc: 'Set up your team, assign roles, and collaborate on contract reviews.', link: '/team' },
-  { icon: '🔌', title: 'API Documentation', desc: 'Integrate ContractIQ with your existing workflow using our REST API.', link: '#' },
+  { icon: '🔌', title: 'API Documentation', desc: 'Integrate IntelliAnalyze AI with your existing workflow using our REST API.', link: '#' },
   { icon: '🛡️', title: 'Security & Compliance', desc: 'Learn about our security measures, data handling, and compliance certifications.', link: '#' },
 ]
 
@@ -37,7 +37,7 @@ export default function Help() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading">Intelli<span className="text-brand-500">Analyze</span></Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/help" className="text-sm text-nav-active font-semibold">Help</Link>

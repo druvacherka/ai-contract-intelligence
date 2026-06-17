@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 
 const teamMembers = [
-  { id: 1, name: 'Saniya', email: 'saniya@contractiq.dev', role: 'Admin', avatar: 'S', color: 'from-accent-rose to-pink-400', contracts: 34, lastActive: '2 min ago', status: 'online' },
-  { id: 2, name: 'Prajwal', email: 'prajwal@contractiq.dev', role: 'Data Engineer', avatar: 'P', color: 'from-brand-500 to-brand-400', contracts: 28, lastActive: '1 hr ago', status: 'online' },
-  { id: 3, name: 'Dhruva', email: 'dhruva@contractiq.dev', role: 'ML Engineer', avatar: 'D', color: 'from-accent-cyan to-blue-400', contracts: 19, lastActive: '3 hrs ago', status: 'away' },
-  { id: 4, name: 'Vishwas', email: 'vishwas@contractiq.dev', role: 'Backend Dev', avatar: 'V', color: 'from-accent-amber to-orange-400', contracts: 22, lastActive: '30 min ago', status: 'online' },
+  { id: 1, name: 'Saniya', email: 'saniya@IntelliAnalyze AI.dev', role: 'Admin', avatar: 'S', color: 'from-accent-rose to-pink-400', contracts: 34, lastActive: '2 min ago', status: 'online' },
+  { id: 2, name: 'Prajwal', email: 'prajwal@IntelliAnalyze AI.dev', role: 'Data Engineer', avatar: 'P', color: 'from-brand-500 to-brand-400', contracts: 28, lastActive: '1 hr ago', status: 'online' },
+  { id: 3, name: 'Dhruva', email: 'dhruva@IntelliAnalyze AI.dev', role: 'ML Engineer', avatar: 'D', color: 'from-accent-cyan to-blue-400', contracts: 19, lastActive: '3 hrs ago', status: 'away' },
+  { id: 4, name: 'Vishwas', email: 'vishwas@IntelliAnalyze AI.dev', role: 'Backend Dev', avatar: 'V', color: 'from-accent-amber to-orange-400', contracts: 22, lastActive: '30 min ago', status: 'online' },
 ]
 
 const pendingInvites = [
@@ -28,7 +28,7 @@ export default function Team() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading">Intelli<span className="text-brand-500">Analyze</span></Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/team" className="text-sm text-nav-active font-semibold">Team</Link>

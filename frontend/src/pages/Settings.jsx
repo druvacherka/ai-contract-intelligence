@@ -3,14 +3,15 @@ import { Link } from 'react-router-dom'
 import ThemeToggle from '../components/ThemeToggle'
 
 export default function Settings() {
-  const [profile, setProfile] = useState({
-    name: 'Saniya',
-    email: 'saniya@contractiq.dev',
-    company: 'ContractIQ Inc.',
-    role: 'Admin',
-    timezone: 'Asia/Kolkata',
-    language: 'English',
-  })
+  const { user, updateProfile } = useAuth()
+  const { addToast } = useNotification()
+
+  const [name, setName] = useState(user?.name || '')
+  const [email, setEmail] = useState(user?.email || '')
+  const [avatar, setAvatar] = useState(user?.avatar || '')
+  const [company, setCompany] = useState('IntelliAnalyze AI Inc.')
+  const [role, setRole] = useState('Admin')
+  
   const [notifications, setNotifications] = useState({
     emailAlerts: true,
     riskAlerts: true,
@@ -28,7 +29,10 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
+          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/dashboard" className="text-sm text-nav hover:text-nav-active transition">Dashboard</Link>
           <Link to="/settings" className="text-sm text-nav-active font-semibold">Settings</Link>
