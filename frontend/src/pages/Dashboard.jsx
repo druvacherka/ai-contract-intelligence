@@ -6,8 +6,108 @@ export default function Dashboard() {
   const [history, setHistory] = useState([])
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('contractiq_history') || '[]')
-    setHistory(stored)
+    // ── Migrate old localStorage keys from before the rename ──
+    const OLD_KEYS = ['ContractIQ_history', 'contractiq_history', 'contractIQ_history']
+    const NEW_KEY = 'IntelliAnalyze AI_history'
+    OLD_KEYS.forEach(oldKey => {
+      const oldData = localStorage.getItem(oldKey)
+      if (oldData) {
+        try {
+          const oldItems = JSON.parse(oldData)
+          const existing = JSON.parse(localStorage.getItem(NEW_KEY) || '[]')
+          const ids = new Set(existing.map(e => e.document_id || e.id))
+          oldItems.forEach(item => {
+            const k = item.document_id || item.id
+            if (k && !ids.has(k)) { existing.push(item); ids.add(k) }
+          })
+          localStorage.setItem(NEW_KEY, JSON.stringify(existing))
+          localStorage.removeItem(oldKey)
+          console.log(`[Migration] Merged ${oldItems.length} items from ${oldKey}`)
+        } catch { /* ignore parse errors */ }
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        let apiHistory = []
+
+        // Try MongoDB-backed contracts endpoint first
+        try {
+          const contractsData = await api.getContracts()
+          const contracts = contractsData.contracts || contractsData || []
+          apiHistory = (Array.isArray(contracts) ? contracts : []).map(doc => ({
+            document_id: doc.contract_id || doc.document_id || doc.id,
+            contract_id: doc.contract_id || doc.document_id || doc.id,
+            id: doc.contract_id || doc.document_id || doc.id,
+            fileName: doc.filename || doc.fileName,
+            clause: doc.primary_clause || doc.clause || 'Unknown',
+            confidence: doc.primary_confidence || doc.confidence || 0,
+            risk_score: doc.overall_risk_score || doc.risk_score || 0,
+            risk_level: doc.overall_risk_level || doc.risk_level || 'Low',
+            completeness_score: doc.completeness_score || null,
+            ai_summary: doc.ai_summary || '',
+            entities: doc.entities || {},
+            timestamp: doc.created_at || doc.processed_at || new Date().toISOString(),
+          }))
+        } catch {
+          // Fall back to in-memory endpoint
+          try {
+            const data = await api.listDocuments()
+            apiHistory = (data.documents || []).map(doc => ({
+              document_id: doc.contract_id || doc.document_id,
+              contract_id: doc.contract_id || doc.document_id,
+              id: doc.contract_id || doc.document_id,
+              fileName: doc.filename,
+              clause: doc.primary_clause || doc.clause || 'Unknown',
+              confidence: doc.primary_confidence || doc.confidence || 0,
+              risk_score: doc.overall_risk_score || doc.risk_score || 0,
+              risk_level: doc.overall_risk_level || doc.risk_level || 'Low',
+              completeness_score: doc.completeness_score || null,
+              ai_summary: doc.ai_summary || '',
+              timestamp: doc.created_at || doc.processed_at || new Date().toISOString(),
+            }))
+          } catch { /* both endpoints failed */ }
+        }
+
+        const localHistory = JSON.parse(localStorage.getItem('IntelliAnalyze AI_history') || '[]')
+        const seen = new Set()
+        const merged = []
+
+        apiHistory.forEach(item => {
+          if (item.document_id && !seen.has(item.document_id)) {
+            seen.add(item.document_id)
+            merged.push(item)
+          }
+        })
+
+        localHistory.forEach(item => {
+          const key = item.document_id || item.id
+          if (key && !seen.has(key)) {
+            seen.add(key)
+            merged.push(item)
+          }
+        })
+
+        merged.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        setHistory(merged)
+        
+        // Save stats to user in LocalStorage if needed
+        if (user) {
+          user.contractsUploaded = merged.length
+          user.contractsProcessed = merged.filter(m => m.clause && m.clause !== 'Unknown').length
+          localStorage.setItem('IntelliAnalyze AI_user', JSON.stringify(user))
+        }
+      } catch (err) {
+        console.error("Failed to load documents from API, falling back to localStorage:", err)
+        const stored = JSON.parse(localStorage.getItem('IntelliAnalyze AI_history') || '[]')
+        setHistory(stored)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
   }, [])
 
   // Compute dynamic stats
@@ -16,13 +116,16 @@ export default function Dashboard() {
   const highRisk = history.filter(h => h.risk_level === 'High').length
   const avgRisk = history.length > 0
     ? (history.reduce((sum, h) => sum + (h.risk_score || 0), 0) / history.length).toFixed(1)
-    : '—'
+    : '0.0'
+  const avgCompleteness = history.filter(h => h.completeness_score != null).length > 0
+    ? Math.round(history.filter(h => h.completeness_score != null).reduce((sum, h) => sum + h.completeness_score, 0) / history.filter(h => h.completeness_score != null).length)
+    : null
 
   const stats = [
     { label: 'Total Contracts', value: totalContracts || '0', change: totalContracts > 0 ? `${totalContracts} analyzed` : 'None yet', icon: '📄' },
-    { label: 'Classified', value: analyzed || '0', change: totalContracts > 0 ? `${Math.round((analyzed / totalContracts) * 100)}% classified` : '—', icon: '✅' },
-    { label: 'High Risk', value: highRisk || '0', change: highRisk > 0 ? `${highRisk} flagged` : 'None', icon: '⚠️' },
-    { label: 'Avg Risk Score', value: avgRisk, change: '/ 100', icon: '📊' },
+    { label: 'Classified Clauses', value: analyzed || '0', change: totalContracts > 0 ? `${Math.round((analyzed / totalContracts) * 100)}% classified` : '—', icon: '✅' },
+    { label: 'High Risk Flagged', value: highRisk || '0', change: highRisk > 0 ? `${highRisk} flagged` : 'None', icon: '⚠️' },
+    { label: avgCompleteness != null ? 'Completeness' : 'Average Risk Score', value: avgCompleteness != null ? `${avgCompleteness}%` : avgRisk, change: avgCompleteness != null ? 'avg score' : '/ 100', icon: avgCompleteness != null ? '📋' : '📊' },
   ]
 
   // Recent contracts
@@ -68,7 +171,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-page">
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
-        <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+        <Link to="/" className="text-xl font-bold text-heading group flex items-center gap-2">
+          <div className="h-7 w-7 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-brand-500/20">IA</div>
+          <span>Intelli<span className="text-brand-500">Analyze</span></span>
+        </Link>
         <div className="flex items-center gap-4">
           <Link to="/" className="text-sm text-nav hover:text-nav-active transition">Home</Link>
           <Link to="/upload" className="text-sm text-nav hover:text-nav-active transition">Upload</Link>

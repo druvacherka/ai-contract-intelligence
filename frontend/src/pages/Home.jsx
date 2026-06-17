@@ -14,12 +14,17 @@ export default function Home() {
     { to: '/help', label: 'Help' },
   ]
 
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+  }
+
   return (
     <div className="min-h-screen bg-page">
       {/* ===== NAVBAR with all links ===== */}
       <nav className="flex items-center justify-between px-8 py-4 bg-nav backdrop-blur-md border-b border-theme sticky top-0 z-50">
         <Link to="/" className="text-xl font-bold text-heading">
-          Contract<span className="text-brand-500">IQ</span>
+          Intelli<span className="text-brand-500">Analyze</span>
           <span className="text-[10px] ml-1.5 px-1.5 py-0.5 rounded bg-brand-100 text-brand-700 font-semibold align-super">AI</span>
         </Link>
         <div className="hidden md:flex items-center gap-1">
@@ -29,8 +34,8 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
-          <Link to="/login" className="text-sm text-nav hover:text-nav-active font-medium transition hidden md:block">Login</Link>
-          <Link to="/signup" className="text-sm bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg font-medium transition shadow-sm">Get Started</Link>
+          <Link to="/signup" className="text-sm text-nav hover:text-nav-active font-medium transition hidden md:block">Register</Link>
+          <Link to="/login" className="text-sm bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg font-medium transition shadow-sm">Login</Link>
           <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden text-heading">
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
@@ -145,6 +150,76 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== 7-AGENT AI PIPELINE ===== */}
+      <section className="max-w-6xl mx-auto px-6 py-24" id="agents">
+        <span className="text-xs font-semibold text-brand-600 uppercase tracking-widest block text-center">Under the Hood</span>
+        <h2 className="text-3xl md:text-4xl font-bold text-heading text-center mt-3 mb-4">7-Agent AI Pipeline</h2>
+        <p className="text-body text-center mb-16 max-w-2xl mx-auto">Every contract runs through a sophisticated multi-agent pipeline. Each agent specializes in one task, ensuring maximum accuracy and reliability.</p>
+
+        {/* Row 1: Agents 1-4 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-4">
+          {[
+            { num: '01', icon: '🔍', name: 'OCR Agent', desc: 'Extracts text from PDFs, scanned documents & images using dual-engine OCR.', color: 'from-blue-600 to-blue-400' },
+            { num: '02', icon: '🧹', name: 'Text Cleaner', desc: 'Normalizes encoding, removes noise, fixes formatting & structures raw text.', color: 'from-teal-600 to-teal-400' },
+            { num: '03', icon: '🏷️', name: 'NER Agent', desc: 'Identifies organizations, persons, dates, money values & jurisdictions.', color: 'from-purple-600 to-purple-400' },
+            { num: '04', icon: '📋', name: 'Clause Detector', desc: 'Detects 15+ clause types: Termination, Confidentiality, Liability & more.', color: 'from-amber-600 to-amber-400' },
+          ].map((agent, i) => (
+            <div key={i} className="group">
+              <div className="bg-card border border-theme rounded-2xl p-6 shadow-theme hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 h-full flex flex-col items-center text-center">
+                <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${agent.color} flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  {agent.icon}
+                </div>
+                <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-brand-100 text-brand-700 font-bold text-[11px] mb-3 dark:bg-brand-500/20 dark:text-brand-400">
+                  {agent.num}
+                </div>
+                <h3 className="font-bold text-heading text-base mb-2">{agent.name}</h3>
+                <p className="text-sm text-body leading-relaxed flex-1">{agent.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pipeline connector arrows */}
+        <div className="hidden lg:flex items-center justify-center gap-2 py-3 text-brand-400">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          <span className="text-xs font-semibold tracking-wider uppercase text-brand-500">Pipeline continues</span>
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+        </div>
+
+        {/* Row 2: Agents 5-7 (centered) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl mx-auto mt-4">
+          {[
+            { num: '05', icon: '⚠️', name: 'Risk Analyzer', desc: 'Scores each clause 0-100 for risk, flags dangerous language & missing protections.', color: 'from-red-600 to-red-400' },
+            { num: '06', icon: '🤖', name: 'AI Summarizer', desc: 'Generates executive summaries, key findings & actionable recommendations via Gemini.', color: 'from-brand-600 to-brand-400' },
+            { num: '07', icon: '✅', name: 'Final Compiler', desc: 'Assembles the complete intelligence report with all scores, entities & risk assessment.', color: 'from-emerald-600 to-emerald-400' },
+          ].map((agent, i) => (
+            <div key={i} className="group">
+              <div className="bg-card border border-theme rounded-2xl p-6 shadow-theme hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 h-full flex flex-col items-center text-center">
+                <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${agent.color} flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  {agent.icon}
+                </div>
+                <div className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-brand-100 text-brand-700 font-bold text-[11px] mb-3 dark:bg-brand-500/20 dark:text-brand-400">
+                  {agent.num}
+                </div>
+                <h3 className="font-bold text-heading text-base mb-2">{agent.name}</h3>
+                <p className="text-sm text-body leading-relaxed flex-1">{agent.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Fallback Architecture banner */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center gap-4 bg-subtle border border-theme rounded-2xl px-8 py-4">
+            <span className="text-2xl">🛡️</span>
+            <div className="text-left">
+              <p className="text-sm font-bold text-heading">Fallback Architecture</p>
+              <p className="text-xs text-body mt-0.5">Primary: Google Gemini → Fallback: Groq (Llama 3.3) → Emergency: Rule-based Analysis</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== OUR MISSION ===== */}
       <section className="max-w-5xl mx-auto px-6 py-24" id="mission">
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -155,7 +230,7 @@ export default function Home() {
               We believe every business — from startups to enterprises — deserves access to the same caliber of contract analysis that was once exclusive to expensive law firms.
             </p>
             <p className="text-body leading-relaxed mb-6">
-              ContractIQ AI uses cutting-edge machine learning to make contract review faster, cheaper, and more accurate. Our mission is to eliminate blind spots in legal agreements and protect businesses from hidden risks.
+              IntelliAnalyze AI uses cutting-edge machine learning to make contract review faster, cheaper, and more accurate. Our mission is to eliminate blind spots in legal agreements and protect businesses from hidden risks.
             </p>
             <div className="flex gap-3">
               <Link to="/help" className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition">Learn More</Link>
@@ -206,7 +281,7 @@ export default function Home() {
       {/* ===== ABOUT US ===== */}
       <section className="max-w-5xl mx-auto px-6 py-24" id="about">
         <span className="text-xs font-semibold text-brand-600 uppercase tracking-widest block text-center">About Us</span>
-        <h2 className="text-3xl md:text-4xl font-bold text-heading text-center mt-3 mb-6">The Minds Behind ContractIQ</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-heading text-center mt-3 mb-6">The Minds Behind IntelliAnalyze AI</h2>
         <p className="text-body text-center max-w-2xl mx-auto mb-14 leading-relaxed">
           We're a team of engineers, data scientists, and legal-tech enthusiasts passionate about building AI solutions that make a real difference in how businesses handle contracts.
         </p>
@@ -264,11 +339,11 @@ export default function Home() {
             <span className="text-xs font-semibold text-brand-600 uppercase tracking-widest">Contact Us</span>
             <h2 className="text-3xl md:text-4xl font-bold text-heading mt-3 mb-6">Get in Touch</h2>
             <p className="text-body leading-relaxed mb-8">
-              Have questions about ContractIQ? Want to schedule a demo? We'd love to hear from you.
+              Have questions about IntelliAnalyze AI? Want to schedule a demo? We'd love to hear from you.
             </p>
             <div className="space-y-4">
               {[
-                { icon: '📧', label: 'Email', value: 'team@contractiq.dev' },
+                { icon: '📧', label: 'Email', value: 'team@IntelliAnalyze AI.dev' },
                 { icon: '📍', label: 'Location', value: 'Bangalore, India' },
                 { icon: '🕐', label: 'Response Time', value: 'Within 24 hours' },
                 { icon: '🔗', label: 'GitHub', value: 'github.com/druvacherka' },
@@ -306,7 +381,7 @@ export default function Home() {
       <section className="bg-gradient-to-br from-brand-600 to-brand-700 py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Transform Your Contract Workflow?</h2>
-          <p className="text-brand-100 text-lg mb-8">Join thousands of teams using ContractIQ to eliminate contract blind spots.</p>
+          <p className="text-brand-100 text-lg mb-8">Join thousands of teams using IntelliAnalyze AI to eliminate contract blind spots.</p>
           <div className="flex justify-center gap-4 flex-wrap">
             <Link to="/signup" className="bg-white text-brand-700 px-8 py-3.5 rounded-xl font-semibold transition hover:scale-105 shadow-lg">Start Free Trial</Link>
             <Link to="/upload" className="border-2 border-white/30 text-white px-8 py-3.5 rounded-xl font-semibold transition hover:bg-white/10">Upload Contract</Link>
@@ -319,7 +394,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="col-span-2 md:col-span-1">
-              <Link to="/" className="text-xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
+              <Link to="/" className="text-xl font-bold text-heading">Intelli<span className="text-brand-500">Analyze</span></Link>
               <p className="text-sm text-body mt-3 leading-relaxed">Enterprise-grade AI contract analysis for modern legal teams.</p>
             </div>
             {[
@@ -344,7 +419,7 @@ export default function Home() {
             ))}
           </div>
           <div className="mt-10 pt-6 border-t border-theme flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-muted">© 2026 ContractIQ — Built with ❤️ by Saniya • Prajwal • Dhruva • Vishwas</p>
+            <p className="text-xs text-muted">© 2026 IntelliAnalyze AI — Built with ❤️ by Saniya • Prajwal • Dhruva • Vishwas</p>
             <p className="text-xs text-muted">React • FastAPI • PyTorch • Docker • Tailwind</p>
           </div>
         </div>

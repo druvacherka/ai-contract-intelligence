@@ -1,21 +1,65 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ThemeToggle from '../components/ThemeToggle'
+import { useAuth } from '../context/AuthContext'
+import { useNotification } from '../context/NotificationContext'
 
 export default function Login() {
   const navigate = useNavigate()
+  const { login, loginWithGoogle, isAuthenticated, isLoading: authLoading, authError } = useAuth()
+  const { addToast } = useNotification()
+  
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e) => { e.preventDefault(); navigate('/dashboard') }
+  // Show OAuth errors from redirect
+  useEffect(() => {
+    if (authError) {
+      setError(`Google login failed: ${authError}`)
+    }
+  }, [authError])
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, authLoading, navigate])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      await login(email, password)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.message || 'Invalid email or password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      await loginWithGoogle()
+    } catch (err) {
+      addToast(`Google login failed: ${err.message}`, 'error')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-auth flex items-center justify-center px-6">
       <div className="absolute top-5 right-8"><ThemeToggle /></div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link to="/" className="text-2xl font-bold text-heading">Contract<span className="text-brand-500">IQ</span></Link>
-          <p className="text-body mt-2">Sign in to your account</p>
+          <Link to="/" className="text-3xl font-extrabold text-heading tracking-tight inline-flex items-center justify-center">
+            Intelli<span className="text-brand-500 font-bold bg-clip-text bg-gradient-to-r from-brand-500 to-brand-400">Analyze</span>
+            <span className="text-xs ml-2 px-1.5 py-0.5 rounded bg-brand-100 dark:bg-brand-950 text-brand-700 dark:text-brand-300 font-semibold align-middle">AI</span>
+          </Link>
+          <p className="text-body mt-2 text-sm">Sign in to your legal analysis workspace</p>
         </div>
         <div className="auth-card border rounded-2xl p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
